@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.kapt")
+    id("com.google.dagger.hilt.android.plugin")
 }
 
 android {
@@ -19,6 +20,15 @@ android {
         vectorDrawables { useSupportLibrary = true }
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getenv("BITRISEIO_ANDROID_KEYSTORE_URL") ?: file(project.rootDir, "keystore.jks"))
+            storePassword = System.getenv("BITRISEIO_ANDROID_KEYSTORE_PASSWORD") ?: "default_password"
+            keyAlias = System.getenv("BITRISEIO_ANDROID_KEYSTORE_ALIAS") ?: "default_alias"
+            keyPassword = System.getenv("BITRISEIO_ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD") ?: "default_password"
+        }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
@@ -26,6 +36,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
         getByName("debug") {
             isMinifyEnabled = false

@@ -2,10 +2,51 @@
     <color name="md_theme_light_primary">#005AC1</color>
     <color name="md_theme_light_onPrimary">#FFFFFF</color>
     <color name="md_theme_light_primaryContainer">#D9E2FF</color>
+    <color name="md_theme_light_onPrimaryContainer">#001B3E</color>
     <color name="md_theme_light_secondary">#2F5DA8</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#D7E2FF</color>
+    <color name="md_theme_light_onSecondaryContainer">#001B3E</color>
+    <color name="md_theme_light_tertiary">#6B5F99</color>
+    <color name="md_theme_light_onTertiary">#FFFFFF</color>
+    <color name="md_theme_light_tertiaryContainer">#EADDFF</color>
+    <color name="md_theme_light_onTertiaryContainer">#211047</color>
     <color name="md_theme_light_background">#FAFCFF</color>
+    <color name="md_theme_light_onBackground">#1A1C1E</color>
     <color name="md_theme_light_surface">#FFFFFF</color>
     <color name="md_theme_light_onSurface">#1A1C1E</color>
+    <color name="md_theme_light_surfaceVariant">#E7E0EC</color>
+    <color name="md_theme_light_onSurfaceVariant">#43474E</color>
+    <color name="md_theme_light_surfaceTint">#005AC1</color>
+    <color name="md_theme_light_inverseSurface">#2E3133</color>
+    <color name="md_theme_light_inverseOnSurface">#EFF1F3</color>
+    <color name="md_theme_light_error">#BA1A1A</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
+    <color name="md_theme_light_errorContainer">#FFDAD6</color>
+    <color name="md_theme_light_onErrorContainer">#410002</color>
+    <color name="md_theme_light_outline">#73777F</color>
+    <color name="md_theme_light_outlineVariant">#C3C7CF</color>
+    <color name="md_theme_light_scrim">#000000</color>
+
+    <!-- Missing light theme attributes referenced in themes.xml -->
+    <color name="colorPrimary">@color/md_theme_light_primary</color>
+    <color name="colorOnPrimary">@color/md_theme_light_onPrimary</color>
+    <color name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</color>
+    <color name="colorOnPrimaryContainer">@color/md_theme_light_onPrimaryContainer</color>
+    <color name="colorSecondary">@color/md_theme_light_secondary</color>
+    <color name="colorOnSecondary">@color/md_theme_light_onSecondary</color>
+    <color name="colorSecondaryContainer">@color/md_theme_light_secondaryContainer</color>
+    <color name="colorOnSecondaryContainer">@color/md_theme_light_onSecondaryContainer</color>
+    <color name="colorTertiary">@color/md_theme_light_tertiary</color>
+    <color name="colorOnTertiary">@color/md_theme_light_onTertiary</color>
+    <color name="colorTertiaryContainer">@color/md_theme_light_tertiaryContainer</color>
+    <color name="colorOnTertiaryContainer">@color/md_theme_light_onTertiaryContainer</color>
+    <color name="colorError">@color/md_theme_light_error</color>
+    <color name="colorOnError">@color/md_theme_light_onError</color>
+    <color name="colorErrorContainer">@color/md_theme_light_errorContainer</color>
+    <color name="colorOnErrorContainer">@color/md_theme_light_onErrorContainer</color>
+    <color name="colorOutline">@color/md_theme_light_outline</color>
+    <color name="colorOutlineVariant">@color/md_theme_light_outlineVariant</color>
 
     <!-- Dark theme colors -->
     <color name="md_theme_dark_primary">#A8C8FF</color>
@@ -36,6 +77,26 @@
     <color name="md_theme_dark_outline">#8D9199</color>
     <color name="md_theme_dark_outlineVariant">#43474E</color>
     <color name="md_theme_dark_scrim">#000000</color>
+
+    <!-- Missing dark theme attributes referenced in themes.xml -->
+    <color name="colorPrimary_dark">@color/md_theme_dark_primary</color>
+    <color name="colorOnPrimary_dark">@color/md_theme_dark_onPrimary</color>
+    <color name="colorPrimaryContainer_dark">@color/md_theme_dark_primaryContainer</color>
+    <color name="colorOnPrimaryContainer_dark">@color/md_theme_dark_onPrimaryContainer</color>
+    <color name="colorSecondary_dark">@color/md_theme_dark_secondary</color>
+    <color name="colorOnSecondary_dark">@color/md_theme_dark_onSecondary</color>
+    <color name="colorSecondaryContainer_dark">@color/md_theme_dark_secondaryContainer</color>
+    <color name="colorOnSecondaryContainer_dark">@color/md_theme_dark_onSecondaryContainer</color>
+    <color name="colorTertiary_dark">@color/md_theme_dark_tertiary</color>
+    <color name="colorOnTertiary_dark">@color/md_theme_dark_onTertiary</color>
+    <color name="colorTertiaryContainer_dark">@color/md_theme_dark_tertiaryContainer</color>
+    <color name="colorOnTertiaryContainer_dark">@color/md_theme_dark_onTertiaryContainer</color>
+    <color name="colorError_dark">@color/md_theme_dark_error</color>
+    <color name="colorOnError_dark">@color/md_theme_dark_onError</color>
+    <color name="colorErrorContainer_dark">@color/md_theme_dark_errorContainer</color>
+    <color name="colorOnErrorContainer_dark">@color/md_theme_dark_onErrorContainer</color>
+    <color name="colorOutline_dark">@color/md_theme_dark_outline</color>
+    <color name="colorOutlineVariant_dark">@color/md_theme_dark_outlineVariant</color>
 
     <!-- Contact sync confidence colors (work in both themes) -->
     <color name="confidence_high">#4CAF50</color>
