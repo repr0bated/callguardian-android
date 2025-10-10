@@ -1,0 +1,84 @@
+---
+format_version: '8'
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+project_type: android
+workflows:
+  primary:
+    steps:
+    - activate-ssh-key@4:
+        run_if: ""
+    - git-clone@6: {}
+    - cache-pull@2: {}
+    - install-missing-android-tools@2:
+        inputs:
+        - ndk_revision: r21e
+        - gradle_version: '7.5'
+    - change-android-versioncode-and-versionname@1:
+        inputs:
+        - new_version_code: $BITRISE_BUILD_NUMBER
+        - new_version_name: 1.0.$BITRISE_BUILD_NUMBER
+    - android-build@1:
+        inputs:
+        - arguments: assembleDebug
+        - cache_level: all
+    - virtual-device-test@1:
+        inputs:
+        - test_type: instrumentation
+        - start_emulator: 'true'
+    - deploy-to-bitrise-io@2: {}
+    - cache-push@2: {}
+
+  release:
+    steps:
+    - activate-ssh-key@4:
+        run_if: ""
+    - git-clone@6: {}
+    - cache-pull@2: {}
+    - install-missing-android-tools@2:
+        inputs:
+        - ndk_revision: r21e
+        - gradle_version: '7.5'
+    - android-build@1:
+        inputs:
+        - arguments: assembleRelease
+        - cache_level: all
+    - sign-apk@1:
+        inputs:
+        - apk_path: $PROJECT_LOCATION/app/build/outputs/apk/release/app-release-unsigned.apk
+    - deploy-to-bitrise-io@2: {}
+    - cache-push@2: {}
+
+  test:
+    steps:
+    - activate-ssh-key@4:
+        run_if: ""
+    - git-clone@6: {}
+    - cache-pull@2: {}
+    - install-missing-android-tools@2:
+        inputs:
+        - gradle_version: '7.5'
+    - android-test@1:
+        inputs:
+        - arguments: testDebugUnitTest
+    - deploy-to-bitrise-io@2: {}
+    - cache-push@2: {}
+
+meta:
+  bitrise.io:
+    stack: linux-docker-android
+    machine_type_id: elite
+
+app:
+  envs:
+  - BITRISE_PROJECT_PATH: "."
+  - BITRISE_ANDROID_NDK_VERSION: "21.4.7075529"
+  - BITRISE_GRADLE_VERSION: "7.5"
+
+trigger_map:
+- push_branch: main
+  workflow: primary
+- pull_request_source_branch: "*"
+  workflow: test
+- tag: "*"
+  workflow: release
+
