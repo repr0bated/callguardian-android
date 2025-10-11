@@ -1,0 +1,271 @@
+workflows:
+  # Android workflow for building and testing the Android app
+  android-workflow:
+    name: Android Build & Test
+    instance_type: linux_x2
+    max_build_duration: 30
+    environment:
+      groups:
+        - keystore_credentials
+        - firebase_credentials
+        - github_credentials
+      vars:
+        ANDROID_SDK_ROOT: "/opt/android-sdk"
+        JAVA_HOME: "/usr/lib/jvm/java-17-openjdk-amd64"
+      java: "17"
+      gradle: "8.5"
+    cache:
+      cache_paths:
+        - ~/.gradle/caches
+        - ~/.gradle/wrapper
+        - ~/.android/build-cache
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: "main"
+          include: true
+        - pattern: "develop"
+          include: true
+        - pattern: "feature/*"
+          include: true
+      tag_patterns:
+        - pattern: "v*"
+          include: true
+      cancel_previous_builds: true
+    scripts:
+      - name: Set up environment
+        script: |
+          echo "Setting up Android build environment..."
+          export ANDROID_HOME=$ANDROID_SDK_ROOT
+          export PATH=$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$PATH
+          java -version
+          ./gradlew --version
+
+      - name: Run unit tests
+        script: ./gradlew testDebugUnitTest
+
+      - name: Build debug APK
+        script: ./gradlew assembleDebug
+
+      - name: Build release APK
+        script: |
+          # Only build release if we have signing credentials
+          if [ ! -z "$CM_KEYSTORE" ] && [ ! -z "$CM_KEYSTORE_PASSWORD" ]; then
+            echo "Building release APK with signing..."
+            ./gradlew assembleRelease
+          else
+            echo "Skipping release build - no signing credentials provided"
+          fi
+
+      - name: Run instrumentation tests (if emulator available)
+        script: |
+          # Note: This would require an emulator or device for full testing
+          echo "Instrumentation tests would run here with proper test setup"
+
+    artifacts:
+      - app/build/outputs/apk/debug/*.apk
+      - app/build/outputs/apk/release/*.apk
+      - app/build/outputs/mapping/release/mapping.txt
+      - app/build/reports/**/*.html
+
+    publishing:
+      email:
+        recipients:
+          - developer@example.com  # Replace with your email
+      scripts:
+        - name: Notify build completion
+          script: |
+            if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+              echo "✅ Release APK built successfully!"
+              echo "📦 APK location: app/build/outputs/apk/release/"
+            else
+              echo "⚠️  Release APK not built (missing credentials)"
+            fi
+
+  # iOS workflow for building and testing the iOS app
+  ios-workflow:
+    name: iOS Build & Test
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    environment:
+      groups:
+        - app_store_credentials
+        - firebase_credentials
+        - github_credentials
+      vars:
+        IOS_SDK: "iphoneos"
+        SIMULATOR_SDK: "iphonesimulator"
+      xcode: latest
+      cocoapods: default
+    cache:
+      cache_paths:
+        - ~/.cocoapods
+        - ~/Library/Caches/CocoaPods
+        - ~/Library/Developer/Xcode/DerivedData
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: "main"
+          include: true
+        - pattern: "develop"
+          include: true
+        - pattern: "feature/*"
+          include: true
+      tag_patterns:
+        - pattern: "v*"
+          include: true
+      cancel_previous_builds: true
+    scripts:
+      - name: Set up iOS environment
+        script: |
+          echo "Setting up iOS build environment..."
+          xcodebuild -version
+          security find-identity -v
+
+      - name: Install dependencies
+        script: |
+          # Install CocoaPods dependencies if Podfile exists
+          if [ -f "Podfile" ]; then
+            echo "Installing CocoaPods dependencies..."
+            pod install
+          else
+            echo "No Podfile found, skipping CocoaPods installation"
+          fi
+
+      - name: Build iOS app
+        script: |
+          # Clean previous builds
+          xcodebuild clean -project CallGuardian.xcodeproj -scheme CallGuardian -configuration Debug
+
+          # Build for simulator (faster)
+          xcodebuild build -project CallGuardian.xcodeproj -scheme CallGuardian -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' -derivedDataPath build/DerivedData
+
+          # Build for device (if certificates available)
+          if [ ! -z "$APP_STORE_CONNECT_PRIVATE_KEY" ]; then
+            echo "Building for device with code signing..."
+            xcodebuild build -project CallGuardian.xcodeproj -scheme CallGuardian -configuration Release -destination 'generic/platform=iOS' -archivePath build/CallGuardian.xcarchive archive
+          else
+            echo "Skipping device build - no code signing credentials"
+          fi
+
+      - name: Run iOS tests
+        script: |
+          echo "Running iOS tests..."
+          # Run unit tests for simulator
+          xcodebuild test -project CallGuardian.xcodeproj -scheme CallGuardian -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' -derivedDataPath build/DerivedData
+
+    artifacts:
+      - build/CallGuardian.xcarchive
+      - build/DerivedData/Build/Products/Debug-iphonesimulator/*.app
+      - build/DerivedData/Build/Products/Release-iphoneos/*.ipa
+      - build/DerivedData/Logs/Test/*.xcresult
+
+    publishing:
+      email:
+        recipients:
+          - developer@example.com  # Replace with your email
+      app_store_connect:
+        # This would publish to App Store Connect if credentials are provided
+        # Uncomment and configure when ready for App Store distribution
+        # api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        # key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        # issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        # submit_to_testflight: true
+        # submit_to_app_store: false
+      scripts:
+        - name: Notify iOS build completion
+          script: |
+            if [ -d "build/CallGuardian.xcarchive" ]; then
+              echo "✅ iOS archive built successfully!"
+              echo "📦 Archive location: build/CallGuardian.xcarchive"
+            else
+              echo "⚠️  iOS archive not created"
+            fi
+
+  # Combined workflow that builds both platforms
+  cross-platform-workflow:
+    name: Cross-Platform Build
+    instance_type: mac_mini_m2  # Use macOS machine that can handle both
+    max_build_duration: 60
+    environment:
+      groups:
+        - keystore_credentials
+        - app_store_credentials
+        - firebase_credentials
+        - github_credentials
+      vars:
+        ANDROID_SDK_ROOT: "/opt/android-sdk"
+        JAVA_HOME: "/usr/lib/jvm/java-17-openjdk-amd64"
+      java: "17"
+      xcode: latest
+      gradle: "8.5"
+      cocoapods: default
+    cache:
+      cache_paths:
+        - ~/.gradle/caches
+        - ~/.gradle/wrapper
+        - ~/.android/build-cache
+        - ~/.cocoapods
+        - ~/Library/Caches/CocoaPods
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "release/*"
+          include: true
+      cancel_previous_builds: true
+    scripts:
+      - name: Set up Android environment
+        script: |
+          echo "Setting up Android environment..."
+          export ANDROID_HOME=$ANDROID_SDK_ROOT
+          export PATH=$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$PATH
+
+      - name: Build Android release
+        script: |
+          if [ ! -z "$CM_KEYSTORE" ]; then
+            echo "Building Android release APK..."
+            ./gradlew assembleRelease
+          else
+            echo "Skipping Android release - no keystore"
+          fi
+
+      - name: Set up iOS environment
+        script: |
+          echo "Setting up iOS environment..."
+          xcodebuild -version
+
+      - name: Build iOS release
+        script: |
+          if [ ! -z "$APP_STORE_CONNECT_PRIVATE_KEY" ]; then
+            echo "Building iOS release archive..."
+            xcodebuild clean -project CallGuardian.xcodeproj -scheme CallGuardian -configuration Release
+            xcodebuild build -project CallGuardian.xcodeproj -scheme CallGuardian -configuration Release -destination 'generic/platform=iOS' -archivePath build/CallGuardian.xcarchive archive
+          else
+            echo "Skipping iOS release - no code signing"
+          fi
+
+    artifacts:
+      # Android artifacts
+      - app/build/outputs/apk/release/*.apk
+      # iOS artifacts
+      - build/CallGuardian.xcarchive
+
+    publishing:
+      email:
+        recipients:
+          - developer@example.com  # Replace with your email
+      scripts:
+        - name: Check build results
+          script: |
+            echo "=== Build Summary ==="
+            if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+              echo "✅ Android APK: $(ls -la app/build/outputs/apk/release/app-release.apk)"
+            fi
+            if [ -d "build/CallGuardian.xcarchive" ]; then
+              echo "✅ iOS Archive: $(ls -la build/CallGuardian.xcarchive)"
+            fi
