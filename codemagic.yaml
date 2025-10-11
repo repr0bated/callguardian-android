@@ -2,7 +2,7 @@ workflows:
   # Android workflow for building and testing the Android app
   android-workflow:
     name: Android Build & Test
-    instance_type: linux_x2
+    instance_type: mac_mini_m2
     max_build_duration: 30
     environment:
       groups:
@@ -188,7 +188,7 @@ workflows:
   # Combined workflow that builds both platforms
   cross-platform-workflow:
     name: Cross-Platform Build
-    instance_type: mac_mini_m2  # Use macOS machine that can handle both
+    instance_type: mac_mini_m2
     max_build_duration: 60
     environment:
       groups:
@@ -197,8 +197,8 @@ workflows:
         - firebase_credentials
         - github_credentials
       vars:
-        ANDROID_SDK_ROOT: "/opt/android-sdk"
-        JAVA_HOME: "/usr/lib/jvm/java-17-openjdk-amd64"
+        ANDROID_SDK_ROOT: "/Users/builder/programs/android-sdk"
+        JAVA_HOME: "/Users/builder/programs/java"
       java: "17"
       xcode: latest
       cocoapods: default
