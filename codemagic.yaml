@@ -13,7 +13,6 @@ workflows:
         ANDROID_SDK_ROOT: "/opt/android-sdk"
         JAVA_HOME: "/usr/lib/jvm/java-17-openjdk-amd64"
       java: "17"
-      gradle: "8.5"
     cache:
       cache_paths:
         - ~/.gradle/caches
@@ -202,7 +201,6 @@ workflows:
         JAVA_HOME: "/usr/lib/jvm/java-17-openjdk-amd64"
       java: "17"
       xcode: latest
-      gradle: "8.5"
       cocoapods: default
     cache:
       cache_paths:
