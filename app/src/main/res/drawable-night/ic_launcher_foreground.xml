@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background circle - darker for night mode -->
+    <path
+        android:fillColor="#004A77"
+        android:pathData="M54,10C29.7,10 10,29.7 10,54s19.7,44 44,44s44,-19.7 44,-44S78.3,10 54,10z"/>
+
+    <!-- Phone icon - light for visibility -->
+    <path
+        android:fillColor="#A8C8FF"
+        android:pathData="M32,24c0,-2.2 1.8,-4 4,-4h36c2.2,0 4,1.8 4,4v60c0,2.2 -1.8,4 -4,4H36c-2.2,0 -4,-1.8 -4,-4V24z"/>
+
+    <!-- Phone screen - dark -->
+    <path
+        android:fillColor="#0F1419"
+        android:pathData="M38,28h32v48H38z"/>
+
+    <!-- Signal bars - accent blue -->
+    <path
+        android:fillColor="#A8C8FF"
+        android:pathData="M42,70h4v-8h-4z"/>
+    <path
+        android:fillColor="#A8C8FF"
+        android:pathData="M48,70h4v-12h-4z"/>
+    <path
+        android:fillColor="#A8C8FF"
+        android:pathData="M54,70h4v-16h-4z"/>
+    <path
+        android:fillColor="#A8C8FF"
+        android:pathData="M60,70h4v-20h-4z"/>
+
+    <!-- Shield/checkmark overlay - green accent -->
+    <path
+        android:fillColor="#81C784"
+        android:pathData="M68,40l-8,8l-4,-4l-6,6l4,4l10,-10z"/>
+
+    <!-- Border highlight -->
+    <path
+        android:fillColor="#1E3A5F"
+        android:pathData="M54,94c-22.1,0 -40,-17.9 -40,-40S31.9,14 54,14s40,17.9 40,40S76.1,94 54,94z"
+        android:strokeWidth="2"
+        android:strokeColor="#A8C8FF"
+        android:fillAlpha="0.1"/>
+
+</vector>

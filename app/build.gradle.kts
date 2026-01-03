@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.callguardian"
+    namespace = "com.callguardian.app"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.callguardian"
+        applicationId = "com.callguardian.app"
         minSdk = 29
         targetSdk = 34
         versionCode = 1

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Monochrome icon for Android 13+ themed icons -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Phone outline -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M32,24c0,-2.2 1.8,-4 4,-4h36c2.2,0 4,1.8 4,4v60c0,2.2 -1.8,4 -4,4H36c-2.2,0 -4,-1.8 -4,-4V24z"/>
+
+    <!-- Phone screen (cutout) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,28h32v48H38z"/>
+
+    <!-- Signal bars -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M42,70h4v-8h-4z"/>
+    <path
+        android:fillColor="#000000"
+        android:pathData="M48,70h4v-12h-4z"/>
+    <path
+        android:fillColor="#000000"
+        android:pathData="M54,70h4v-16h-4z"/>
+    <path
+        android:fillColor="#000000"
+        android:pathData="M60,70h4v-20h-4z"/>
+
+    <!-- Shield/checkmark -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M68,40l-8,8l-4,-4l-6,6l4,4l10,-10z"/>
+
+</vector>

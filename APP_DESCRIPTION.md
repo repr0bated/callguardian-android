@@ -1,5 +1,13 @@
 # CallGuardian App Store Listing Materials
 
+## Short Description (80 characters max)
+
+```
+Block spam calls & messages with AI. Smart caller ID & protection made simple.
+```
+
+---
+
 ## App Store Description
 
 **CallGuardian: Your Smart Call & Message Protection**
