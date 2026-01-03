@@ -1,0 +1,201 @@
+# CallGuardian Android Project .gitignore
+
+# Gradle files
+.gradle/
+build/
+!app/build/
+
+# Android Studio files
+.idea/
+*.iml
+*.ipr
+*.iws
+local.properties
+.cxx/
+.externalNativeBuild/
+.cpt/
+
+# Keystore files (NEVER commit these)
+**/keystore.jks
+**/keystore
+**/*.keystore
+**/debug.keystore
+**/release.keystore
+app/signing.properties
+
+# App signing files
+**/app-release-key.keystore
+**/app-release-key.jks
+**/upload-keystore.jks
+**/upload-keystore
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Log files
+*.log
+logs/
+*.log.*
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# Build outputs
+app/build/
+build/
+out/
+
+# IDE files
+.vscode/
+*.sublime-*
+*.atom/
+
+# Dependency cache
+.gradle/
+.caches/
+
+# APK and AAB files
+*.apk
+*.aab
+*.ap_
+*.ap_
+
+# Test outputs
+**/test-results/
+**/reports/
+
+# Coverage reports
+**/coverage/
+**/*.ec
+
+# Crashlytics
+crashlytics-build.properties
+
+# Firebase
+google-services.json
+google-services.plist
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Documentation builds
+docs/_build/
+docs/build/
+
+# Node.js (if using React Native or web components)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (if using Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+target/
+
+# IntelliJ IDEA
+out/
+*.iws
+*.iml
+*.ipr
+
+# Eclipse
+.metadata/
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.project
+.externalToolBuilders/
+*.launch
+.classpath
+.factorypath
+.apt_generated/
+.clover/
+.gradle/
+build/
+!app/build/
+
+# VS Code
+.vscode/
+
+# Mac OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+
+# App-specific sensitive files
+**/config.json
+**/secrets.json
+**/credentials.json
+**/api-keys.json
+**/private.key
+**/public.key
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Cache files
+.cache/
+*.cache
+
+# Temporary directories
+tmp/
+temp/

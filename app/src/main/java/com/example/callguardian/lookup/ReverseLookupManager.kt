@@ -2,12 +2,18 @@ package com.example.callguardian.lookup
 
 import com.example.callguardian.data.cache.LookupCacheManager
 import com.example.callguardian.model.LookupResult
+import com.example.callguardian.util.exceptions.CacheException
+import com.example.callguardian.util.exceptions.ExceptionFactory
+import com.example.callguardian.util.exceptions.LookupException
+import com.example.callguardian.util.exceptions.NetworkException
+import com.example.callguardian.util.exceptions.ServiceException
+import com.example.callguardian.util.handling.ErrorHandling
+import com.example.callguardian.util.logging.Logger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,14 +26,28 @@ class ReverseLookupManager @Inject constructor(
 ) {
 
     suspend fun lookup(phoneNumber: String): LookupResult? = withContext(ioDispatcher) {
-        lookupWithFallback(phoneNumber)
+        try {
+            lookupWithFallback(phoneNumber)
+        } catch (e: LookupException) {
+            Logger.e(e, "Lookup failed for phone number: $phoneNumber")
+            throw e
+        } catch (e: Exception) {
+            Logger.e(e, "Unexpected error during lookup for phone number: $phoneNumber")
+            throw ExceptionFactory.createLookupException("Reverse lookup failed", e)
+        }
     }
 
     private suspend fun lookupWithFallback(phoneNumber: String): LookupResult? {
         // Check cache first
-        val cachedResult = cacheManager.get(phoneNumber)
+        val cachedResult = runCatching { cacheManager.get(phoneNumber) }
+            .onFailure {
+                Logger.w(it, "Cache lookup failed for phone number: $phoneNumber")
+                // Continue with network lookup even if cache fails
+            }
+            .getOrNull()
+        
         if (cachedResult != null) {
-            Timber.d("Returning cached result for $phoneNumber")
+            Logger.d("Returning cached result for $phoneNumber")
             return cachedResult
         }
 
@@ -35,7 +55,11 @@ class ReverseLookupManager @Inject constructor(
         val parallelResult = lookupParallel(phoneNumber)
         if (parallelResult != null) {
             // Cache successful result
-            cacheManager.put(phoneNumber, parallelResult)
+            runCatching { cacheManager.put(phoneNumber, parallelResult) }
+                .onFailure {
+                    Logger.w(it, "Failed to cache lookup result for phone number: $phoneNumber")
+                    // Continue even if caching fails
+                }
             return parallelResult
         }
 
@@ -43,7 +67,11 @@ class ReverseLookupManager @Inject constructor(
         val sequentialResult = lookupSequential(phoneNumber)
         if (sequentialResult != null) {
             // Cache successful result
-            cacheManager.put(phoneNumber, sequentialResult)
+            runCatching { cacheManager.put(phoneNumber, sequentialResult) }
+                .onFailure {
+                    Logger.w(it, "Failed to cache lookup result for phone number: $phoneNumber")
+                    // Continue even if caching fails
+                }
             return sequentialResult
         }
 
@@ -62,10 +90,11 @@ class ReverseLookupManager @Inject constructor(
                 }.onSuccess { result ->
                     val responseTime = System.currentTimeMillis() - startTime
                     healthMonitor.recordSuccess(source.id, responseTime)
+                    Logger.d("Parallel lookup succeeded with ${source.id} in ${responseTime}ms")
                 }.onFailure { error ->
                     val responseTime = System.currentTimeMillis() - startTime
                     healthMonitor.recordFailure(source.id, error)
-                    Timber.w("Parallel lookup failed for ${source.id}: ${error.message}")
+                    Logger.w(error, "Parallel lookup failed for ${source.id}: ${error.message}")
                 }.getOrNull()
             }
         }
@@ -88,12 +117,12 @@ class ReverseLookupManager @Inject constructor(
             }.onSuccess { result ->
                 val responseTime = System.currentTimeMillis() - startTime
                 healthMonitor.recordSuccess(source.id, responseTime)
-                Timber.d("Sequential lookup succeeded with ${source.id}")
+                Logger.d("Sequential lookup succeeded with ${source.id} in ${responseTime}ms")
                 return result
             }.onFailure { error ->
                 val responseTime = System.currentTimeMillis() - startTime
                 healthMonitor.recordFailure(source.id, error)
-                Timber.w("Sequential lookup failed for ${source.id}: ${error.message}")
+                Logger.w(error, "Sequential lookup failed for ${source.id}: ${error.message}")
             }
         }
         return null

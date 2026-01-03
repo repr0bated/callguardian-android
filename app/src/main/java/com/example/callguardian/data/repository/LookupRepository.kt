@@ -8,16 +8,22 @@ import com.example.callguardian.data.db.PhoneProfileEntity
 import com.example.callguardian.lookup.ReverseLookupManager
 import com.example.callguardian.model.AiAssessment
 import com.example.callguardian.model.BlockMode
-import com.example.callguardian.model.ContactInfo
 import com.example.callguardian.model.InteractionDirection
 import com.example.callguardian.model.InteractionType
 import com.example.callguardian.model.LookupOutcome
 import com.example.callguardian.model.LookupResult
 import com.example.callguardian.service.ContactChange
+import com.example.callguardian.service.ContactInfo
 import com.example.callguardian.service.ContactInfoField
 import com.example.callguardian.service.ContactLookupService
 import com.example.callguardian.service.ContactSyncResult
-import com.example.callguardian.service.ContactSyncService
+import com.example.callguardian.util.database.DatabaseManager
+import com.example.callguardian.util.exceptions.CacheException
+import com.example.callguardian.util.exceptions.DatabaseException
+import com.example.callguardian.util.exceptions.ExceptionFactory
+import com.example.callguardian.util.exceptions.LookupException
+import com.example.callguardian.util.handling.ErrorHandling
+import com.example.callguardian.util.logging.Logger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -33,7 +39,7 @@ class LookupRepository @Inject constructor(
     private val interactionDao: PhoneInteractionDao,
     private val aiRiskScorer: AiRiskScorer,
     private val contactLookupService: ContactLookupService,
-    private val contactSyncService: ContactSyncService,
+    private val databaseManager: DatabaseManager,
     private val ioDispatcher: CoroutineDispatcher
 ) {
 
@@ -43,84 +49,107 @@ class LookupRepository @Inject constructor(
         direction: InteractionDirection,
         messageBody: String? = null
     ): LookupOutcome = withContext(ioDispatcher) {
-        val normalized = phoneNumber.filter { it.isDigit() || it == '+' }
-        val existing = phoneProfileDao.getByNumber(normalized)
-        val contactInfo = contactLookupService.lookupContact(normalized)
-        val lookupResult = reverseLookupManager.lookup(normalized)
-        val aiAssessment = aiRiskScorer.evaluate(normalized, messageBody, lookupResult)
+        var contactInfo: ContactInfo? = null
+        try {
+            val normalized = phoneNumber.filter { it.isDigit() || it == '+' }
+            
+            // Use DatabaseManager for database operations with graceful degradation
+            val existing = databaseManager.safeQuery("getByNumber") {
+                phoneProfileDao.getByNumber(normalized)
+            }
+            
+            contactInfo = contactLookupService.lookupContact(normalized)
+            val lookupResult = reverseLookupManager.lookup(normalized)
+            val aiAssessment = aiRiskScorer.evaluate(normalized, messageBody, lookupResult)
 
-        // Merge contact info with lookup result for better display name
-        val mergedLookupResult = mergeContactInfoWithLookupResult(lookupResult, contactInfo)
+            // Merge contact info with lookup result for better display name
+            val mergedLookupResult = mergeContactInfoWithLookupResult(lookupResult, contactInfo)
 
-        val profile = existing
-            ?.merge(mergedLookupResult, normalized, aiAssessment, contactInfo)
-            ?: mergedLookupResult?.toEntity(normalized, aiAssessment, contactInfo)
+            val profile = existing
+                ?.merge(mergedLookupResult, normalized, aiAssessment, contactInfo)
+                ?: mergedLookupResult?.toEntity(normalized, aiAssessment, contactInfo)
 
-        if (profile != null) {
-            phoneProfileDao.upsert(profile)
-        }
+            if (profile != null) {
+                databaseManager.safeTransaction("upsertProfile") {
+                    phoneProfileDao.upsert(profile)
+                }
+            }
 
-        interactionDao.insert(
-            PhoneInteractionEntity(
-                phoneNumber = normalized,
-                type = type,
-                direction = direction,
-                timestamp = Instant.now(),
-                status = when {
-                    profile?.shouldBlockCalls() == true && type == InteractionType.CALL -> "BLOCKED"
-                    profile?.shouldBlockMessages() == true && type == InteractionType.SMS -> "BLOCKED"
-                    else -> "ALLOWED"
-                },
-                messageBody = messageBody,
-                lookupSummary = buildSummary(mergedLookupResult, profile, aiAssessment, contactInfo)
+            databaseManager.safeTransaction("insertInteraction") {
+                interactionDao.insert(
+                    PhoneInteractionEntity(
+                        phoneNumber = normalized,
+                        type = type,
+                        direction = direction,
+                        timestamp = Instant.now(),
+                        status = when {
+                            profile?.shouldBlockCalls() == true && type == InteractionType.CALL -> "BLOCKED"
+                            profile?.shouldBlockMessages() == true && type == InteractionType.SMS -> "BLOCKED"
+                            else -> "ALLOWED"
+                        },
+                        messageBody = messageBody,
+                        lookupSummary = buildSummary(mergedLookupResult, profile, aiAssessment, contactInfo)
+                    )
+                )
+            }
+
+            LookupOutcome(
+                lookupResult = mergedLookupResult,
+                contactInfo = contactInfo
             )
-        )
-
-        LookupOutcome(
-            lookupResult = mergedLookupResult,
-            aiAssessment = aiAssessment,
-            contactInfo = contactInfo
-        )
+        } catch (e: LookupException) {
+            Logger.e(e, "Lookup failed for phone number: $phoneNumber")
+            throw e
+        } catch (e: DatabaseException) {
+            Logger.e(e, "Database error during lookup for phone number: $phoneNumber")
+            // Continue with degraded functionality
+            return@withContext LookupOutcome(
+                lookupResult = null,
+                contactInfo = null
+            )
+        } catch (e: Exception) {
+            Logger.e(e, "Unexpected error during lookup for phone number: $phoneNumber")
+            throw ExceptionFactory.createLookupException("Lookup repository operation failed", e)
+        }
     }
 
     suspend fun updateBlockMode(phoneNumber: String, blockMode: BlockMode) {
         withContext(ioDispatcher) {
-            phoneProfileDao.updateBlockMode(phoneNumber, blockMode.name)
+            try {
+                databaseManager.safeTransaction("updateBlockMode") {
+                    phoneProfileDao.updateBlockMode(phoneNumber, blockMode.name)
+                }
+            } catch (e: DatabaseException) {
+                Logger.e(e, "Failed to update block mode for phone number: $phoneNumber")
+                throw e
+            }
         }
     }
 
     suspend fun updateContactInfo(phoneNumber: String, contactId: Long?, isExistingContact: Boolean) {
         withContext(ioDispatcher) {
-            phoneProfileDao.updateContactInfo(phoneNumber, contactId, isExistingContact)
+            try {
+                databaseManager.safeTransaction("updateContactInfo") {
+                    phoneProfileDao.updateContactInfo(phoneNumber, contactId, isExistingContact)
+                }
+            } catch (e: DatabaseException) {
+                Logger.e(e, "Failed to update contact info for phone number: $phoneNumber")
+                throw e
+            }
         }
     }
 
-    /**
-     * Analyzes if a contact sync is needed and returns sync recommendations
-     */
-    suspend fun analyzeContactSync(phoneNumber: String): ContactSyncResult {
-        val lookupOutcome = performLookup(
-            phoneNumber = phoneNumber,
-            type = InteractionType.CALL,
-            direction = InteractionDirection.INCOMING
-        )
 
-        return contactSyncService.analyzeContactSync(phoneNumber, lookupOutcome)
-    }
-
-    /**
-     * Applies approved contact sync changes
-     */
-    suspend fun applyContactSyncChanges(
-        contactInfo: ContactInfo,
-        approvedChanges: List<ContactChange>,
-        newInfo: List<ContactInfoField>
-    ): Boolean {
-        return contactSyncService.applyContactChanges(contactInfo, approvedChanges, newInfo)
-    }
 
     suspend fun getProfile(phoneNumber: String): PhoneProfileEntity? = withContext(ioDispatcher) {
-        phoneProfileDao.getByNumber(phoneNumber.filter { it.isDigit() || it == '+' })
+        try {
+            databaseManager.safeQuery("getProfile") {
+                phoneProfileDao.getByNumber(phoneNumber.filter { it.isDigit() || it == '+' })
+            }
+        } catch (e: DatabaseException) {
+            Logger.e(e, "Failed to get profile for phone number: $phoneNumber")
+            return@withContext null
+        }
     }
 
     fun observeProfiles(): Flow<List<PhoneProfileEntity>> = phoneProfileDao.observeAll()
@@ -128,7 +157,12 @@ class LookupRepository @Inject constructor(
     fun observeRecentInteractions(limit: Int = 50) = interactionDao.observeRecent(limit)
 
     suspend fun isExistingContact(phoneNumber: String): Boolean = withContext(ioDispatcher) {
-        contactLookupService.lookupContact(phoneNumber.filter { it.isDigit() || it == '+' })?.existsInContacts == true
+        try {
+            contactLookupService.lookupContact(phoneNumber.filter { it.isDigit() || it == '+' })?.existsInContacts == true
+        } catch (e: ServiceException) {
+            Logger.e(e, "Failed to check if contact exists for phone number: $phoneNumber")
+            return@withContext false
+        }
     }
 
     private fun LookupResult.toEntity(
@@ -213,7 +247,7 @@ class LookupRepository @Inject constructor(
 
         // Prioritize contact name over lookup result name if contact exists
         return lookupResult.copy(
-            displayName = contactInfo.displayName.takeIf { it.isNotBlank() } ?: lookupResult.displayName,
+            displayName = contactInfo.displayName?.takeIf { it.isNotBlank() } ?: lookupResult.displayName,
             tags = lookupResult.tags + "Existing Contact"
         )
     }

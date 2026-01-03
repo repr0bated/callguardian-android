@@ -3,7 +3,6 @@ package com.example.callguardian.service
 import android.content.ContentProviderOperation
 import android.content.Context
 import android.provider.ContactsContract
-import com.example.callguardian.model.ContactInfo
 import com.example.callguardian.model.LookupOutcome
 import com.example.callguardian.model.LookupResult
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -48,60 +47,18 @@ class ContactSyncService @Inject constructor(
             !lookupResult.displayName.isNullOrBlank()) {
             changes.add(
                 ContactChange(
-                    type = ContactChangeType.DISPLAY_NAME,
-                    field = "Display Name",
-                    currentValue = existingContact.displayName ?: phoneNumber,
-                    proposedValue = lookupResult.displayName!!,
-                    confidence = calculateNameConfidence(lookupResult, existingContact)
+                    type = ChangeType.MODIFIED,
+                    field = ContactInfoField(FieldType.NAME, lookupResult.displayName!!),
+                    oldValue = existingContact.displayName ?: phoneNumber,
+                    newValue = lookupResult.displayName!!
                 )
             )
         }
 
-        // Check for additional information that could be added
-        val newInfo = mutableListOf<ContactInfoField>()
-
-        if (existingContact.carrier.isNullOrBlank() && !lookupResult.carrier.isNullOrBlank()) {
-            newInfo.add(
-                ContactInfoField(
-                    field = "Carrier",
-                    value = lookupResult.carrier!!,
-                    category = ContactFieldCategory.CARRIER
-                )
-            )
-        }
-
-        if (existingContact.region.isNullOrBlank() && !lookupResult.region.isNullOrBlank()) {
-            newInfo.add(
-                ContactInfoField(
-                    field = "Region",
-                    value = lookupResult.region!!,
-                    category = ContactFieldCategory.REGION
-                )
-            )
-        }
-
-        // Check for tags/notes that could be added
-        val newTags = lookupResult.tags.filter { tag ->
-            !existingContact.tags.contains(tag)
-        }
-
-        if (newTags.isNotEmpty()) {
-            changes.add(
-                ContactChange(
-                    type = ContactChangeType.TAGS,
-                    field = "Tags",
-                    currentValue = existingContact.tags.joinToString(", "),
-                    proposedValue = (existingContact.tags + newTags).joinToString(", "),
-                    confidence = 0.8 // High confidence for tags from lookup
-                )
-            )
-        }
-
-        return@withContext when {
-            changes.isNotEmpty() || newInfo.isNotEmpty() ->
-                ContactSyncResult.ChangesDetected(changes, newInfo, existingContact, contactInfo)
-            else ->
-                ContactSyncResult.NoChanges
+        return@withContext if (changes.isNotEmpty()) {
+            ContactSyncResult.ChangesDetected(contactInfo, changes)
+        } else {
+            ContactSyncResult.NoChanges
         }
     }
 
@@ -110,8 +67,7 @@ class ContactSyncService @Inject constructor(
      */
     suspend fun applyContactChanges(
         contactInfo: ContactInfo,
-        approvedChanges: List<ContactChange>,
-        newInfo: List<ContactInfoField>
+        approvedChanges: List<ContactChange>
     ): Boolean = withContext(Dispatchers.IO) {
         try {
             val operations = mutableListOf<ContentProviderOperation>()
@@ -119,43 +75,23 @@ class ContactSyncService @Inject constructor(
             // Build update operations for approved changes
             approvedChanges.forEach { change ->
                 when (change.type) {
-                    ContactChangeType.DISPLAY_NAME -> {
-                        operations.add(
-                            ContentProviderOperation.newUpdate(
-                                ContactsContract.Data.CONTENT_URI
-                            )
-                                .withSelection(
-                                    "${ContactsContract.Data.CONTACT_ID} = ? AND ${ContactsContract.Data.MIMETYPE} = ?",
-                                    arrayOf(contactInfo.contactId.toString(), ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                    ChangeType.MODIFIED -> {
+                        if (change.field.type == FieldType.NAME) {
+                            operations.add(
+                                ContentProviderOperation.newUpdate(
+                                    ContactsContract.Data.CONTENT_URI
                                 )
-                                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, change.proposedValue)
-                                .build()
-                        )
+                                    .withSelection(
+                                        "${ContactsContract.Data.CONTACT_ID} = ? AND ${ContactsContract.Data.MIMETYPE} = ?",
+                                        arrayOf(contactInfo.contactId.toString(), ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                                    )
+                                    .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, change.newValue)
+                                    .build()
+                            )
+                        }
                     }
-                    ContactChangeType.TAGS -> {
-                        // For tags, we'll add them as notes or organization
-                        val tagsText = change.proposedValue.split(", ").joinToString("\n")
-                        operations.add(
-                            ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                                .withValue(ContactsContract.Data.CONTACT_ID, contactInfo.contactId)
-                                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE)
-                                .withValue(ContactsContract.CommonDataKinds.Note.NOTE, "CallGuardian Tags: $tagsText")
-                                .build()
-                        )
-                    }
+                    else -> {}
                 }
-            }
-
-            // Add new information as notes
-            if (newInfo.isNotEmpty()) {
-                val infoText = newInfo.joinToString("\n") { "${it.field}: ${it.value}" }
-                operations.add(
-                    ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                        .withValue(ContactsContract.Data.CONTACT_ID, contactInfo.contactId)
-                        .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE)
-                        .withValue(ContactsContract.CommonDataKinds.Note.NOTE, "CallGuardian Info: $infoText")
-                        .build()
-                )
             }
 
             if (operations.isNotEmpty()) {
@@ -171,7 +107,8 @@ class ContactSyncService @Inject constructor(
         }
     }
 
-    private suspend fun getExistingContactDetails(contactId: Long): ExistingContactDetails {
+    private suspend fun getExistingContactDetails(contactId: Long?): ExistingContactDetails {
+        if (contactId == null) return ExistingContactDetails()
         return try {
             val projection = arrayOf(
                 ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME,
@@ -265,36 +202,3 @@ data class ExistingContactDetails(
     val region: String? = null,
     val tags: List<String> = emptyList()
 )
-
-data class ContactChange(
-    val type: ContactChangeType,
-    val field: String,
-    val currentValue: String,
-    val proposedValue: String,
-    val confidence: Double
-)
-
-enum class ContactChangeType {
-    DISPLAY_NAME, TAGS, CARRIER, REGION
-}
-
-data class ContactInfoField(
-    val field: String,
-    val value: String,
-    val category: ContactFieldCategory
-)
-
-enum class ContactFieldCategory {
-    CARRIER, REGION, LINE_TYPE, SPAM_SCORE
-}
-
-sealed class ContactSyncResult {
-    object NoChanges : ContactSyncResult()
-    data class ChangesDetected(
-        val changes: List<ContactChange>,
-        val newInfo: List<ContactInfoField>,
-        val existingContact: ExistingContactDetails,
-        val contactInfo: ContactInfo
-    ) : ContactSyncResult()
-}
-

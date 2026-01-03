@@ -14,6 +14,7 @@ import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import com.example.callguardian.ui.CallGuardianApp
 import com.example.callguardian.ui.MainViewModel
+import com.example.callguardian.util.PermissionUtils
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -27,6 +28,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         requestNotificationPermissionIfNeeded()
+        requestRequiredPermissionsIfNeeded()
 
         setContent {
             CallGuardianApp(
@@ -45,6 +47,37 @@ class MainActivity : ComponentActivity() {
             ) == PackageManager.PERMISSION_GRANTED
             if (!granted) {
                 notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun requestRequiredPermissionsIfNeeded() {
+        if (!PermissionUtils.hasAllPermissions(this)) {
+            PermissionUtils.requestMissingPermissions(this)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        when (requestCode) {
+            PermissionUtils.REQUEST_CODE_CALL_LOG,
+            PermissionUtils.REQUEST_CODE_PHONE_STATE,
+            PermissionUtils.REQUEST_CODE_READ_SMS,
+            PermissionUtils.REQUEST_CODE_WRITE_CONTACTS,
+            PermissionUtils.REQUEST_CODE_ANSWER_PHONE_CALLS -> {
+                // Handle permission results
+                val allGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+                if (allGranted) {
+                    // All permissions granted, proceed with app functionality
+                } else {
+                    // Some permissions denied, show appropriate message
+                    // This could trigger a dialog explaining why permissions are needed
+                }
             }
         }
     }

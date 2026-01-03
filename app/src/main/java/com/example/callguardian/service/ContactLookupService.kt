@@ -2,7 +2,7 @@ package com.example.callguardian.service
 
 import android.content.Context
 import android.provider.ContactsContract
-import com.example.callguardian.model.ContactInfo
+import com.example.callguardian.service.ContactInfo
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

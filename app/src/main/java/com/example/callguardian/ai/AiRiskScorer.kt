@@ -3,6 +3,11 @@ package com.example.callguardian.ai
 import com.example.callguardian.data.settings.LookupPreferences
 import com.example.callguardian.model.AiAssessment
 import com.example.callguardian.model.LookupResult
+import com.example.callguardian.util.exceptions.ApiException
+import com.example.callguardian.util.exceptions.ExceptionFactory
+import com.example.callguardian.util.exceptions.LookupException
+import com.example.callguardian.util.logging.Logger
+import com.example.callguardian.util.network.NetworkManager
 import com.squareup.moshi.Json
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
@@ -11,7 +16,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,6 +23,7 @@ import javax.inject.Singleton
 class AiRiskScorer @Inject constructor(
     private val preferences: LookupPreferences,
     private val client: OkHttpClient,
+    private val networkManager: NetworkManager,
     moshi: Moshi
 ) {
 
@@ -39,10 +44,16 @@ class AiRiskScorer @Inject constructor(
         lookupResult: LookupResult?
     ): AiAssessment? {
         val prefs = preferences.preferencesFlow.first()
-        if (!prefs.hasHuggingFaceCredentials) return null
+        if (!prefs.hasHuggingFaceCredentials) {
+            Logger.w("AI risk evaluation skipped: no Hugging Face credentials configured")
+            return null
+        }
 
         val input = buildInput(phoneNumber, messageBody, lookupResult)
-        if (input.isBlank()) return null
+        if (input.isBlank()) {
+            Logger.w("AI risk evaluation skipped: no input data")
+            return null
+        }
 
         val url = "https://api-inference.huggingface.co/models/${prefs.huggingFaceModelId}"
         val body = requestAdapter.toJson(RequestPayload(inputs = input))
@@ -55,25 +66,34 @@ class AiRiskScorer @Inject constructor(
             .post(body)
             .build()
 
-        val response = runCatching { client.newCall(request).execute() }
-            .onFailure { Timber.w(it, "AI risk request failed") }
-            .getOrNull() ?: return null
+        try {
+            val response = networkManager.executeWithRetry("AI Risk Evaluation") { client.newCall(request).execute() }
 
-        response.use { resp ->
-            if (!resp.isSuccessful) {
-                Timber.w("AI risk response unsuccessful: %s", resp.code)
-                return null
+            response.use { resp ->
+                if (!resp.isSuccessful) {
+                    Logger.w("AI risk response unsuccessful: ${resp.code}")
+                    return null
+                }
+                val rawBody = resp.body?.string() ?: run {
+                    Logger.w("AI risk response body is null")
+                    return null
+                }
+
+                val best = parseResponse(rawBody) ?: return null
+                val label = best.label?.takeIf { it.isNotBlank() } ?: return null
+                val score = best.score ?: return null
+
+                return AiAssessment(
+                    label = label.trim(),
+                    confidencePercent = (score.coerceIn(0.0, 1.0) * 100).toInt()
+                )
             }
-            val rawBody = resp.body?.string() ?: return null
-
-            val best = parseResponse(rawBody) ?: return null
-            val label = best.label?.takeIf { it.isNotBlank() } ?: return null
-            val score = best.score ?: return null
-
-            return AiAssessment(
-                label = label.trim(),
-                confidence = score.coerceIn(0.0, 1.0)
-            )
+        } catch (e: ApiException) {
+            Logger.e(e, "AI risk evaluation failed for phone number: $phoneNumber")
+            throw e
+        } catch (e: Exception) {
+            Logger.e(e, "Unexpected error during AI risk evaluation for phone number: $phoneNumber")
+            throw ExceptionFactory.createLookupException("AI risk evaluation failed", e)
         }
     }
 
@@ -86,7 +106,7 @@ class AiRiskScorer @Inject constructor(
             return outer.flatten().maxByOrNull { it.score ?: 0.0 }
         }
 
-        Timber.w("AI risk response parse failed")
+        Logger.w("AI risk response parse failed: $rawBody")
         return null
     }
 

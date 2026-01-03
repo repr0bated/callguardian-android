@@ -3,6 +3,12 @@ package com.example.callguardian.lookup.sources
 import com.example.callguardian.data.settings.LookupPreferences
 import com.example.callguardian.lookup.ReverseLookupSource
 import com.example.callguardian.model.LookupResult
+import com.example.callguardian.util.exceptions.ApiException
+import com.example.callguardian.util.exceptions.ExceptionFactory
+import com.example.callguardian.util.exceptions.LookupException
+import com.example.callguardian.util.handling.ErrorHandling
+import com.example.callguardian.util.logging.Logger
+import com.example.callguardian.util.network.NetworkManager
 import com.squareup.moshi.Json
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.flow.first
@@ -17,6 +23,7 @@ import javax.inject.Singleton
 class AbstractApiSource @Inject constructor(
     private val preferences: LookupPreferences,
     private val client: OkHttpClient,
+    private val networkManager: NetworkManager,
     moshi: Moshi
 ) : ReverseLookupSource {
 
@@ -27,7 +34,10 @@ class AbstractApiSource @Inject constructor(
 
     override suspend fun lookup(phoneNumber: String): LookupResult? {
         val prefs = preferences.preferencesFlow.first()
-        if (!prefs.hasAbstractKey) return null
+        if (!prefs.hasAbstractKey) {
+            Logger.w("AbstractAPI lookup skipped: no API key configured")
+            return null
+        }
 
         val url = BASE_URL.toHttpUrl().newBuilder()
             .addQueryParameter("api_key", prefs.abstractApiKey)
@@ -35,33 +45,55 @@ class AbstractApiSource @Inject constructor(
             .build()
 
         val request = Request.Builder().url(url).build()
-        val response = runCatching { client.newCall(request).execute() }
-            .onFailure { Timber.w(it, "AbstractAPI request failed") }
-            .getOrNull() ?: return null
-
-        response.use { resp ->
-            if (!resp.isSuccessful) return null
-            val bodyString = resp.body?.string() ?: return null
-            val payload = runCatching { adapter.fromJson(bodyString) }
-                .onFailure { Timber.w(it, "Failed to parse AbstractAPI response") }
-                .getOrNull() ?: return null
-
-            return LookupResult(
-                phoneNumber = phoneNumber,
-                displayName = payload.owner?.name,
-                carrier = payload.carrier,
-                region = payload.location?.let { "${it.city ?: ""} ${it.country ?: ""}".trim() },
-                lineType = payload.type,
-                spamScore = payload.risk?.score,
-                tags = payload.risk?.level?.let { listOf(it) } ?: emptyList(),
-                source = displayName,
-                rawPayload = mapOf(
-                    "valid" to payload.valid,
-                    "carrier" to payload.carrier,
-                    "risk" to payload.risk,
-                    "location" to payload.location
-                )
+        
+        try {
+            val response = networkManager.executeWithRetry(
+                operationName = "abstractapi_lookup",
+                maxRetries = 3,
+                block = { client.newCall(request).execute() }
             )
+            
+            response.use { resp ->
+                if (!resp.isSuccessful) {
+                    Logger.w("AbstractAPI request failed with status: ${resp.code}")
+                    return null
+                }
+                
+                val bodyString = resp.body?.string() ?: run {
+                    Logger.w("AbstractAPI response body is null")
+                    return null
+                }
+                
+                val payload = runCatching { adapter.fromJson(bodyString) }
+                    .onFailure {
+                        Logger.e(it, "Failed to parse AbstractAPI response: $bodyString")
+                        throw ApiException("Failed to parse AbstractAPI response", it)
+                    }
+                    .getOrNull() ?: return null
+
+                return LookupResult(
+                    phoneNumber = phoneNumber,
+                    displayName = payload.owner?.name,
+                    carrier = payload.carrier,
+                    region = payload.location?.let { "${it.city ?: ""} ${it.country ?: ""}".trim() },
+                    lineType = payload.type,
+                    spamScore = payload.risk?.score,
+                    tags = payload.risk?.level?.let { listOf(it) } ?: emptyList(),
+                    source = displayName,
+                    rawPayload = mapOf(
+                        "valid" to payload.valid,
+                        "carrier" to payload.carrier,
+                        "risk" to payload.risk,
+                        "location" to payload.location
+                    )
+                )
+            }
+        } catch (e: ApiException) {
+            Logger.e(e, "AbstractAPI lookup failed for phone number: $phoneNumber")
+            throw e
+        } catch (e: Exception) {
+            Logger.e(e, "Unexpected error during AbstractAPI lookup for phone number: $phoneNumber")
+            throw ExceptionFactory.createLookupException("AbstractAPI lookup failed", e)
         }
     }
 

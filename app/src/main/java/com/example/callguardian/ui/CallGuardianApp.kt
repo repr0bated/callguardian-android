@@ -44,11 +44,11 @@ import com.example.callguardian.data.db.PhoneProfileEntity
 import com.example.callguardian.model.BlockMode
 import com.example.callguardian.model.InteractionType
 import com.example.callguardian.ui.theme.CallGuardianTheme
+import com.example.callguardian.model.ContactInfo
+import com.example.callguardian.ui.ContactSyncUiState
 import com.example.callguardian.service.ContactChange
-import com.example.callguardian.service.ContactInfo
 import com.example.callguardian.service.ContactInfoField
 import com.example.callguardian.service.ContactSyncResult
-import com.example.callguardian.service.ContactSyncUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -111,7 +111,7 @@ private fun MainScreen(
     onSaveCustomEndpoint: (String, String, String) -> Unit,
     onSaveHuggingFaceCredentials: (String, String) -> Unit,
     onAnalyzeContactSync: (String) -> Unit,
-    onApplyContactSyncChanges: (com.example.callguardian.service.ContactInfo, List<com.example.callguardian.service.ContactChange>, List<com.example.callguardian.service.ContactInfoField>) -> Unit,
+    onApplyContactSyncChanges: (ContactInfo, List<ContactChange>, List<ContactInfoField>) -> Unit,
     onResetContactSyncState: () -> Unit,
     onToggleDarkMode: () -> Unit
 ) {
@@ -171,6 +171,21 @@ private fun MainScreen(
                     onToggleDarkMode = onToggleDarkMode
                 )
             }
+    }
+
+    // Show contact sync dialog when needed
+    when (state.contactSyncState) {
+        is ContactSyncUiState.SyncAvailable -> {
+            ContactSyncDialog(
+                syncResult = state.contactSyncState.syncResult,
+                onApplyChanges = onApplyContactSyncChanges,
+                onDismiss = onResetContactSyncState
+            )
+        }
+        is ContactSyncUiState.Error -> {
+            // Could show an error dialog here
+        }
+        else -> {}
     }
 }
 
@@ -392,21 +407,6 @@ private fun LabeledTextField(label: String, value: String, onValueChange: (Strin
         label = { Text(text = label) },
         modifier = Modifier.fillMaxWidth()
     )
-
-    // Show contact sync dialog when needed
-    when (state.contactSyncState) {
-        is ContactSyncUiState.SyncAvailable -> {
-            ContactSyncDialog(
-                syncResult = state.contactSyncState.syncResult,
-                onApplyChanges = onApplyContactSyncChanges,
-                onDismiss = onResetContactSyncState
-            )
-        }
-        is ContactSyncUiState.Error -> {
-            // Could show an error dialog here
-        }
-        else -> {}
-    }
 }
 
 private fun isCallScreeningRoleHeld(context: Context): Boolean {

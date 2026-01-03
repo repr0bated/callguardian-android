@@ -1,5 +1,6 @@
 package com.example.callguardian.di
 
+import com.example.callguardian.data.settings.EncryptedPreferences
 import com.example.callguardian.lookup.ReverseLookupSource
 import com.example.callguardian.lookup.sources.AbstractApiSource
 import com.example.callguardian.lookup.sources.CustomEndpointLookupSource
