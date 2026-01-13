@@ -2,6 +2,7 @@ package com.example.callguardian.service
 
 import android.content.ContentProviderOperation
 import android.content.Context
+import android.os.Parcelable
 import android.provider.ContactsContract
 import com.example.callguardian.model.ContactInfo
 import com.example.callguardian.model.LookupOutcome
@@ -9,6 +10,8 @@ import com.example.callguardian.model.LookupResult
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -114,7 +117,7 @@ class ContactSyncService @Inject constructor(
         newInfo: List<ContactInfoField>
     ): Boolean = withContext(Dispatchers.IO) {
         try {
-            val operations = mutableListOf<ContentProviderOperation>()
+            val operations = ArrayList<ContentProviderOperation>()
 
             // Build update operations for approved changes
             approvedChanges.forEach { change ->
@@ -142,6 +145,9 @@ class ContactSyncService @Inject constructor(
                                 .withValue(ContactsContract.CommonDataKinds.Note.NOTE, "CallGuardian Tags: $tagsText")
                                 .build()
                         )
+                    }
+                    else -> {
+                        // Handle other types or ignore
                     }
                 }
             }
@@ -258,43 +264,48 @@ class ContactSyncService @Inject constructor(
     }
 }
 
+@Parcelize
 data class ExistingContactDetails(
     val displayName: String? = null,
     val phoneNumber: String? = null,
     val carrier: String? = null,
     val region: String? = null,
     val tags: List<String> = emptyList()
-)
+) : Parcelable
 
+@Parcelize
 data class ContactChange(
     val type: ContactChangeType,
     val field: String,
     val currentValue: String,
     val proposedValue: String,
     val confidence: Double
-)
+) : Parcelable
 
 enum class ContactChangeType {
     DISPLAY_NAME, TAGS, CARRIER, REGION
 }
 
+@Parcelize
 data class ContactInfoField(
     val field: String,
     val value: String,
     val category: ContactFieldCategory
-)
+) : Parcelable
 
 enum class ContactFieldCategory {
     CARRIER, REGION, LINE_TYPE, SPAM_SCORE
 }
 
-sealed class ContactSyncResult {
+sealed class ContactSyncResult : Parcelable {
+    @Parcelize
     object NoChanges : ContactSyncResult()
+    
+    @Parcelize
     data class ChangesDetected(
         val changes: List<ContactChange>,
         val newInfo: List<ContactInfoField>,
         val existingContact: ExistingContactDetails,
-        val contactInfo: ContactInfo
+        val contactInfo: @RawValue ContactInfo
     ) : ContactSyncResult()
 }
-

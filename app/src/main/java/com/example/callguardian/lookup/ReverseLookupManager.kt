@@ -106,7 +106,7 @@ class ReverseLookupManager @Inject constructor(
         val healthStatus = healthMonitor.getHealthStatus()
         return if (healthStatus.isNotEmpty()) {
             healthySources.sortedBy { source ->
-                healthStatus[source.id]?.averageResponseTimeMs ?: Long.MAX_VALUE
+                healthStatus[source.id]?.averageResponseTimeMs ?: Double.MAX_VALUE
             }
         } else {
             // Fallback to original order if no health data

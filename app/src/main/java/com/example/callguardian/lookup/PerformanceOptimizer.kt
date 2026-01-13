@@ -57,7 +57,7 @@ class PerformanceOptimizer @Inject constructor(
         val sourceId = source.id
 
         // Check rate limits
-        if (!rateLimiters[sourceId]?.canProceed() ?: true) {
+        if (rateLimiters[sourceId]?.canProceed() == false) {
             Timber.d("Rate limit exceeded for $sourceId, queuing request")
             return queueRequest(phoneNumber, source, lookupFunction)
         }
@@ -82,7 +82,7 @@ class PerformanceOptimizer @Inject constructor(
             },
             averageResponseTimeMs = calculateAverageResponseTime(),
             rateLimitHits = sources.sumOf { source ->
-                rateLimiters[source.id]?.hits ?: 0L
+                rateLimiters[source.id]?.getHits() ?: 0L
             },
             queuedRequests = requestQueue.size
         )
@@ -190,7 +190,7 @@ class PerformanceOptimizer @Inject constructor(
         retryMetrics[sourceId] = metrics.recordFinalFailure()
     }
 
-    private suspend fun calculateAverageResponseTime(): Double {
+    private fun calculateAverageResponseTime(): Double {
         val allMetrics = retryMetrics.values
         if (allMetrics.isEmpty()) return 0.0
 
@@ -217,6 +217,8 @@ class RateLimiter {
     private val lastRefill = AtomicLong(System.currentTimeMillis())
     private val hits = AtomicLong(0)
 
+    fun getHits(): Long = hits.get()
+
     suspend fun canProceed(): Boolean = mutex.withLock {
         refillTokens()
         if (tokens.get() > 0) {
@@ -234,7 +236,7 @@ class RateLimiter {
 
         if (timePassed >= REFILL_INTERVAL_MS) {
             val tokensToAdd = (timePassed / REFILL_INTERVAL_MS) * TOKENS_PER_INTERVAL
-            val newTokenCount = (tokens.get() + tokensToAdd).coerceAtMost(MAX_TOKENS)
+            val newTokenCount = (tokens.get().toLong() + tokensToAdd).coerceAtMost(MAX_TOKENS.toLong()).toInt()
             tokens.set(newTokenCount)
             lastRefill.set(now)
         }

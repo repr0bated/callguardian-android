@@ -1,7 +1,6 @@
 package com.example.callguardian.ui
 
 import android.app.Dialog
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,7 +9,6 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.callguardian.R
 import com.example.callguardian.databinding.DialogContactSyncBinding
 import com.example.callguardian.databinding.ItemContactChangeBinding
 import com.example.callguardian.service.ContactChange
@@ -27,6 +25,7 @@ class ContactSyncDialogFragment : DialogFragment() {
 
     private val viewModel: MainViewModel by activityViewModels()
     private var _binding: DialogContactSyncBinding? = null
+    // This property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
 
     private lateinit var syncResult: ContactSyncResult.ChangesDetected
@@ -51,23 +50,15 @@ class ContactSyncDialogFragment : DialogFragment() {
             ?: throw IllegalArgumentException("Sync result must be provided")
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = DialogContactSyncBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        // Inflate the layout for the dialog
+        _binding = DialogContactSyncBinding.inflate(layoutInflater)
+        
+        // Setup UI elements
         setupRecyclerViews()
         setupButtons()
         populateData()
-    }
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return MaterialAlertDialogBuilder(requireContext())
             .setTitle("Review Contact Changes")
             .setView(binding.root)
@@ -77,6 +68,11 @@ class ContactSyncDialogFragment : DialogFragment() {
             .setNegativeButton("Cancel", null)
             .create()
     }
+
+    // We don't need onCreateView/onViewCreated when using onCreateDialog with setView
+    // But if we did, we would return binding.root here.
+    // Since we are using onCreateDialog to build the dialog, we should be careful about lifecycle.
+    // The binding is created in onCreateDialog, so it will be valid until onDestroyView.
 
     private fun setupRecyclerViews() {
         // Setup changes RecyclerView
@@ -97,22 +93,26 @@ class ContactSyncDialogFragment : DialogFragment() {
             selectedChanges.clear()
             selectedChanges.addAll(syncResult.changes.indices)
             binding.changesRecyclerView.adapter?.notifyDataSetChanged()
+            updateButtonStates()
         }
 
         binding.clearChangesButton.setOnClickListener {
             selectedChanges.clear()
             binding.changesRecyclerView.adapter?.notifyDataSetChanged()
+            updateButtonStates()
         }
 
         binding.selectAllNewInfoButton.setOnClickListener {
             selectedNewInfo.clear()
             selectedNewInfo.addAll(syncResult.newInfo.indices)
             binding.newInfoRecyclerView.adapter?.notifyDataSetChanged()
+            updateButtonStates()
         }
 
         binding.clearNewInfoButton.setOnClickListener {
             selectedNewInfo.clear()
             binding.newInfoRecyclerView.adapter?.notifyDataSetChanged()
+            updateButtonStates()
         }
     }
 
@@ -129,11 +129,6 @@ class ContactSyncDialogFragment : DialogFragment() {
         binding.clearChangesButton.isEnabled = selectedChanges.isNotEmpty()
         binding.selectAllNewInfoButton.isEnabled = syncResult.newInfo.isNotEmpty()
         binding.clearNewInfoButton.isEnabled = selectedNewInfo.isNotEmpty()
-
-        val hasSelections = selectedChanges.isNotEmpty() || selectedNewInfo.isNotEmpty()
-        (dialog as? MaterialAlertDialogBuilder)?.apply {
-            // The dialog buttons are handled by the DialogFragment lifecycle
-        }
     }
 
     private fun applySelectedChanges() {
@@ -193,7 +188,10 @@ class ContactSyncDialogFragment : DialogFragment() {
                 }
                 confidenceTextView.setTextColor(confidenceColor)
 
+                // Remove listener to avoid triggering it while setting state
+                checkbox.setOnCheckedChangeListener(null)
                 checkbox.isChecked = selectedChanges.contains(position)
+                
                 checkbox.setOnCheckedChangeListener { _, isChecked ->
                     if (isChecked) {
                         selectedChanges.add(position)
@@ -214,7 +212,10 @@ class ContactSyncDialogFragment : DialogFragment() {
                 proposedValueTextView.text = infoField.value
                 confidenceTextView.text = "Category: ${infoField.category.name}"
 
+                // Remove listener to avoid triggering it while setting state
+                checkbox.setOnCheckedChangeListener(null)
                 checkbox.isChecked = selectedNewInfo.contains(position)
+                
                 checkbox.setOnCheckedChangeListener { _, isChecked ->
                     if (isChecked) {
                         selectedNewInfo.add(position)
@@ -232,4 +233,3 @@ class ContactSyncDialogFragment : DialogFragment() {
         _binding = null
     }
 }
-

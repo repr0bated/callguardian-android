@@ -1,6 +1,7 @@
 plugins {
-    id("com.android.application") version "8.2.2" apply false
-    id("org.jetbrains.kotlin.android") version "1.9.22" apply false
-    id("org.jetbrains.kotlin.kapt") version "1.9.22" apply false
-    id("com.google.dagger.hilt.android.plugin") version "2.50" apply false
+    alias(libs.plugins.agp.application) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.kapt) apply false
+    alias(libs.plugins.hilt.android) apply false
+    alias(libs.plugins.gms) apply false
 }

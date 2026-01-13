@@ -64,7 +64,7 @@ class ServiceHealthMonitor @Inject constructor(
      */
     suspend fun isHealthy(sourceId: String): Boolean {
         val health = healthMetrics[sourceId] ?: return true // Assume healthy if no data
-        return health.isHealthy()
+        return health.isHealthy
     }
 
     /**
@@ -73,7 +73,7 @@ class ServiceHealthMonitor @Inject constructor(
     suspend fun getBestSource(): ReverseLookupSource? {
         val healthySources = sources.filter { isHealthy(it.id) }
         return healthySources.minByOrNull { source ->
-            healthMetrics[source.id]?.averageResponseTimeMs ?: Long.MAX_VALUE
+            healthMetrics[source.id]?.averageResponseTimeMs ?: Double.MAX_VALUE
         }
     }
 

@@ -9,9 +9,16 @@ import com.example.callguardian.data.settings.LookupPreferences
 import com.example.callguardian.data.settings.LookupPreferencesState
 import com.example.callguardian.model.BlockMode
 import com.example.callguardian.service.ContactChange
-import com.example.callguardian.service.ContactInfo
+import com.example.callguardian.model.ContactInfo
 import com.example.callguardian.service.ContactInfoField
 import com.example.callguardian.service.ContactSyncResult
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 sealed class ContactSyncUiState {
     object Idle : ContactSyncUiState()
@@ -22,13 +29,6 @@ sealed class ContactSyncUiState {
     object Success : ContactSyncUiState()
     data class Error(val message: String) : ContactSyncUiState()
 }
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(

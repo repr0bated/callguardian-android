@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.preferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -21,13 +21,13 @@ class LookupPreferences @Inject constructor(
     private val dataStore = context.lookupDataStore
 
     private object Keys {
-        val numlookupKey = preferencesKey<String>("numlookup_api_key")
-        val abstractKey = preferencesKey<String>("abstract_api_key")
-        val customEndpoint = preferencesKey<String>("custom_endpoint")
-        val customHeader = preferencesKey<String>("custom_header")
-        val customHeaderValue = preferencesKey<String>("custom_header_value")
-        val huggingFaceKey = preferencesKey<String>("hugging_face_api_key")
-        val huggingFaceModel = preferencesKey<String>("hugging_face_model_id")
+        val numlookupKey = stringPreferencesKey("numlookup_api_key")
+        val abstractKey = stringPreferencesKey("abstract_api_key")
+        val customEndpoint = stringPreferencesKey("custom_endpoint")
+        val customHeader = stringPreferencesKey("custom_header")
+        val customHeaderValue = stringPreferencesKey("custom_header_value")
+        val huggingFaceKey = stringPreferencesKey("hugging_face_api_key")
+        val huggingFaceModel = stringPreferencesKey("hugging_face_model_id")
     }
 
     val preferencesFlow: Flow<LookupPreferencesState> = dataStore.data.map { prefs ->
