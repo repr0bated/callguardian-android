@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="http://schemas.android.com/tools">
+    <color name="colorError">@color/md_theme_light_error</color>
+    <color name="colorErrorContainer">@color/md_theme_light_errorContainer</color>
+    <color name="colorErrorContainer_dark">@color/md_theme_dark_errorContainer</color>
+    <color name="colorError_dark">@color/md_theme_dark_error</color>
+    <color name="colorOnError">@color/md_theme_light_onError</color>
+    <color name="colorOnErrorContainer">@color/md_theme_light_onErrorContainer</color>
+    <color name="colorOnErrorContainer_dark">@color/md_theme_dark_onErrorContainer</color>
+    <color name="colorOnError_dark">@color/md_theme_dark_onError</color>
+    <color name="colorOnPrimary">@color/md_theme_light_onPrimary</color>
+    <color name="colorOnPrimaryContainer">@color/md_theme_light_onPrimaryContainer</color>
+    <color name="colorOnPrimaryContainer_dark">@color/md_theme_dark_onPrimaryContainer</color>
+    <color name="colorOnPrimary_dark">@color/md_theme_dark_onPrimary</color>
+    <color name="colorOnSecondary">@color/md_theme_light_onSecondary</color>
+    <color name="colorOnSecondaryContainer">@color/md_theme_light_onSecondaryContainer</color>
+    <color name="colorOnSecondaryContainer_dark">@color/md_theme_dark_onSecondaryContainer</color>
+    <color name="colorOnSecondary_dark">@color/md_theme_dark_onSecondary</color>
+    <color name="colorOnTertiary">@color/md_theme_light_onTertiary</color>
+    <color name="colorOnTertiaryContainer">@color/md_theme_light_onTertiaryContainer</color>
+    <color name="colorOnTertiaryContainer_dark">@color/md_theme_dark_onTertiaryContainer</color>
+    <color name="colorOnTertiary_dark">@color/md_theme_dark_onTertiary</color>
+    <color name="colorOutline">@color/md_theme_light_outline</color>
+    <color name="colorOutlineVariant">@color/md_theme_light_outlineVariant</color>
+    <color name="colorOutlineVariant_dark">@color/md_theme_dark_outlineVariant</color>
+    <color name="colorOutline_dark">@color/md_theme_dark_outline</color>
+    <color name="colorPrimary">@color/md_theme_light_primary</color>
+    <color name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</color>
+    <color name="colorPrimaryContainer_dark">@color/md_theme_dark_primaryContainer</color>
+    <color name="colorPrimary_dark">@color/md_theme_dark_primary</color>
+    <color name="colorSecondary">@color/md_theme_light_secondary</color>
+    <color name="colorSecondaryContainer">@color/md_theme_light_secondaryContainer</color>
+    <color name="colorSecondaryContainer_dark">@color/md_theme_dark_secondaryContainer</color>
+    <color name="colorSecondary_dark">@color/md_theme_dark_secondary</color>
+    <color name="colorTertiary">@color/md_theme_light_tertiary</color>
+    <color name="colorTertiaryContainer">@color/md_theme_light_tertiaryContainer</color>
+    <color name="colorTertiaryContainer_dark">@color/md_theme_dark_tertiaryContainer</color>
+    <color name="colorTertiary_dark">@color/md_theme_dark_tertiary</color>
+    <color name="confidence_high">#4CAF50</color>
+    <color name="confidence_low">#F44336</color>
+    <color name="confidence_medium">#FF9800</color>
+    <color name="md_theme_dark_background">#0F1419</color>
+    <color name="md_theme_dark_error">#FFB4AB</color>
+    <color name="md_theme_dark_errorContainer">#93000A</color>
+    <color name="md_theme_dark_inverseOnSurface">#2E3133</color>
+    <color name="md_theme_dark_inverseSurface">#EFF1F3</color>
+    <color name="md_theme_dark_onBackground">#DDE3EA</color>
+    <color name="md_theme_dark_onError">#690005</color>
+    <color name="md_theme_dark_onErrorContainer">#FFDAD6</color>
+    <color name="md_theme_dark_onPrimary">#000000</color>
+    <color name="md_theme_dark_onPrimaryContainer">#D1E4FF</color>
+    <color name="md_theme_dark_onSecondary">#000000</color>
+    <color name="md_theme_dark_onSecondaryContainer">#D7E2FF</color>
+    <color name="md_theme_dark_onSurface">#DDE3EA</color>
+    <color name="md_theme_dark_onSurfaceVariant">#C3C7CF</color>
+    <color name="md_theme_dark_onTertiary">#371E73</color>
+    <color name="md_theme_dark_onTertiaryContainer">#EADDFF</color>
+    <color name="md_theme_dark_outline">#8D9199</color>
+    <color name="md_theme_dark_outlineVariant">#43474E</color>
+    <color name="md_theme_dark_primary">#A8C8FF</color>
+    <color name="md_theme_dark_primaryContainer">#004A77</color>
+    <color name="md_theme_dark_scrim">#000000</color>
+    <color name="md_theme_dark_secondary">#B8C4FF</color>
+    <color name="md_theme_dark_secondaryContainer">#4A4458</color>
+    <color name="md_theme_dark_surface">#0F1419</color>
+    <color name="md_theme_dark_surfaceTint">#A8C8FF</color>
+    <color name="md_theme_dark_surfaceVariant">#3E4750</color>
+    <color name="md_theme_dark_tertiary">#CFBCF7</color>
+    <color name="md_theme_dark_tertiaryContainer">#524570</color>
+    <color name="md_theme_light_background">#FAFCFF</color>
+    <color name="md_theme_light_error">#BA1A1A</color>
+    <color name="md_theme_light_errorContainer">#FFDAD6</color>
+    <color name="md_theme_light_inverseOnSurface">#EFF1F3</color>
+    <color name="md_theme_light_inverseSurface">#2E3133</color>
+    <color name="md_theme_light_onBackground">#1A1C1E</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
+    <color name="md_theme_light_onErrorContainer">#410002</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_onPrimaryContainer">#001B3E</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_onSecondaryContainer">#001B3E</color>
+    <color name="md_theme_light_onSurface">#1A1C1E</color>
+    <color name="md_theme_light_onSurfaceVariant">#43474E</color>
+    <color name="md_theme_light_onTertiary">#FFFFFF</color>
+    <color name="md_theme_light_onTertiaryContainer">#211047</color>
+    <color name="md_theme_light_outline">#73777F</color>
+    <color name="md_theme_light_outlineVariant">#C3C7CF</color>
+    <color name="md_theme_light_primary">#005AC1</color>
+    <color name="md_theme_light_primaryContainer">#D9E2FF</color>
+    <color name="md_theme_light_scrim">#000000</color>
+    <color name="md_theme_light_secondary">#2F5DA8</color>
+    <color name="md_theme_light_secondaryContainer">#D7E2FF</color>
+    <color name="md_theme_light_surface">#FFFFFF</color>
+    <color name="md_theme_light_surfaceTint">#005AC1</color>
+    <color name="md_theme_light_surfaceVariant">#E7E0EC</color>
+    <color name="md_theme_light_tertiary">#6B5F99</color>
+    <color name="md_theme_light_tertiaryContainer">#EADDFF</color>
+    <string name="action_allow">Allow</string>
+    <string name="action_block">Block</string>
+    <string name="action_reject_call">Reject Call</string>
+    <string name="action_save_contact">Save Contact</string>
+    <string name="app_name">Call Guardian</string>
+    <string name="block_all">Block All</string>
+    <string name="block_calls">Block Calls</string>
+    <string name="block_mode_label">Block mode: %1$s</string>
+    <string name="card_required_roles">Required Roles</string>
+    <string name="carrier_label">Carrier: %1$s</string>
+    <string name="cta_activate">Activate</string>
+    <string name="cta_set_default">Set Default</string>
+    <string name="default_web_client_id" translatable="false">420281222188-88vhdre90jkjtokmmfumv2e42oapi411.apps.googleusercontent.com</string>
+    <string name="existing_contact_indicator">📞 Contact</string>
+    <string name="gcm_defaultSenderId" translatable="false">420281222188</string>
+    <string name="google_api_key" translatable="false">AIzaSyDdetn42lZkxCmi54Khxhc1ZfAFE62qshQ</string>
+    <string name="google_app_id" translatable="false">1:420281222188:android:26d83c954e061e056bfd89</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyDdetn42lZkxCmi54Khxhc1ZfAFE62qshQ</string>
+    <string name="google_storage_bucket" translatable="false">geminidev-479406.firebasestorage.app</string>
+    <string name="input_abstract_key">AbstractAPI Key</string>
+    <string name="input_custom_endpoint">Custom Endpoint (use {number})</string>
+    <string name="input_header_name">Header Name</string>
+    <string name="input_header_value">Header Value</string>
+    <string name="input_hf_api_key">Hugging Face API Key</string>
+    <string name="input_hf_model_id">Hugging Face Model ID</string>
+    <string name="input_numlookup_key">NumLookupAPI Key</string>
+    <string name="interaction_meta">Type: %1$s • Status: %2$s</string>
+    <string name="lookup_pending">Looking up…</string>
+    <string name="lookup_services">Lookup Services</string>
+    <string name="notification_ai_summary">AI risk: %1$s (%2$d%%)</string>
+    <string name="notification_channel_lookup_description">Shows caller lookup information with quick actions.</string>
+    <string name="notification_channel_lookup_name">Lookup Results</string>
+    <string name="permission_call_screening_rationale">Call Guardian needs call screening access to analyze and block spam calls.</string>
+    <string name="permission_sms_rationale">Call Guardian needs to be the default SMS app to scan and manage messages.</string>
+    <string name="project_id" translatable="false">geminidev-479406</string>
+    <string name="region_label">Region: %1$s</string>
+    <string name="role_call_screening">Call Screening</string>
+    <string name="role_call_screening_desc">Allow Call Guardian to analyze and respond to incoming calls.</string>
+    <string name="role_sms">Default SMS App</string>
+    <string name="role_sms_desc">Allow Call Guardian to process and protect incoming messages.</string>
+    <string name="save_abstract_key">Save Abstract Key</string>
+    <string name="save_custom_endpoint">Save Custom Endpoint</string>
+    <string name="save_hf_credentials">Save Hugging Face Settings</string>
+    <string name="save_numlookup_key">Save NumLookup Key</string>
+    <string name="section_known_numbers">Known Numbers</string>
+    <string name="section_recent_activity">Recent Activity</string>
+    <string name="status_granted">Granted</string>
+    <string name="status_required">Required</string>
+    <style name="Theme.CallGuardian" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar" ns1:targetApi="m">true</item>
+        <item name="android:windowLightNavigationBar" ns1:targetApi="o_mr1">true</item>
+
+        
+        <item name="colorPrimary">@color/md_theme_light_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_light_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_dark_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/md_theme_light_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_light_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_light_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/md_theme_light_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_light_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_light_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_light_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/md_theme_light_background</item>
+        <item name="colorOnBackground">@color/md_theme_light_onBackground</item>
+        <item name="colorSurface">@color/md_theme_light_surface</item>
+        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_light_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
+        <item name="colorSurfaceTint">@color/md_theme_light_surfaceTint</item>
+        <item name="colorInverseSurface">@color/md_theme_light_inverseSurface</item>
+        <item name="colorInverseOnSurface">@color/md_theme_light_inverseOnSurface</item>
+        <item name="colorError">@color/md_theme_light_error</item>
+        <item name="colorOnError">@color/md_theme_light_onError</item>
+        <item name="colorErrorContainer">@color/md_theme_light_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/md_theme_light_onErrorContainer</item>
+        <item name="colorOutline">@color/md_theme_light_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_light_outlineVariant</item>
+        <item name="colorScrim">@color/md_theme_light_scrim</item>
+    </style>
+    <style name="Theme.CallGuardian.Dark" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar" ns1:targetApi="m">false</item>
+        <item name="android:windowLightNavigationBar" ns1:targetApi="o_mr1">false</item>
+
+        
+        <item name="colorPrimary">@color/md_theme_dark_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_dark_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_dark_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_dark_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/md_theme_dark_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_dark_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_dark_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_dark_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/md_theme_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_dark_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_dark_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_dark_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/md_theme_dark_background</item>
+        <item name="colorOnBackground">@color/md_theme_dark_onBackground</item>
+        <item name="colorSurface">@color/md_theme_dark_surface</item>
+        <item name="colorOnSurface">@color/md_theme_dark_onSurface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_dark_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_dark_onSurfaceVariant</item>
+        <item name="colorSurfaceTint">@color/md_theme_dark_surfaceTint</item>
+        <item name="colorInverseSurface">@color/md_theme_dark_inverseSurface</item>
+        <item name="colorInverseOnSurface">@color/md_theme_dark_inverseOnSurface</item>
+        <item name="colorError">@color/md_theme_dark_error</item>
+        <item name="colorOnError">@color/md_theme_dark_onError</item>
+        <item name="colorErrorContainer">@color/md_theme_dark_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/md_theme_dark_onErrorContainer</item>
+        <item name="colorOutline">@color/md_theme_dark_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_dark_outlineVariant</item>
+        <item name="colorScrim">@color/md_theme_dark_scrim</item>
+    </style>
+</resources>

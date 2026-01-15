@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.example.callguardian.app-mergeDebugResources-79:/values-watch-v20/values-watch-v20.xml",
+            "map": [
+                {
+                    "source": "/home/jeremy/.gradle/caches/8.13/transforms/b6503aeb66fe2639b550d138a5369aae/transformed/appcompat-1.6.1/res/values-watch-v20/values-watch-v20.xml",
+                    "from": {
+                        "startLines": "2,5,8",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "55,214,385",
+                        "endLines": "4,7,10",
+                        "endColumns": "12,12,12",
+                        "endOffsets": "209,380,553"
+                    }
+                }
+            ]
+        }
+    ]
+}

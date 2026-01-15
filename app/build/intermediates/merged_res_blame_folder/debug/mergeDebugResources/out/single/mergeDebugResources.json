@@ -1,0 +1,38 @@
+[
+    {
+        "merged": "com.example.callguardian.app-debug-81:/layout_item_contact_change.xml.flat",
+        "source": "com.example.callguardian.app-main-83:/layout/item_contact_change.xml"
+    },
+    {
+        "merged": "com.example.callguardian.app-debug-81:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.example.callguardian.app-main-83:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.example.callguardian.app-debug-81:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.example.callguardian.app-main-83:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.example.callguardian.app-debug-81:/drawable_ic_notification.xml.flat",
+        "source": "com.example.callguardian.app-main-83:/drawable/ic_notification.xml"
+    },
+    {
+        "merged": "com.example.callguardian.app-debug-81:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.example.callguardian.app-main-83:/drawable/ic_launcher_background.xml"
+    },
+    {
+        "merged": "com.example.callguardian.app-debug-81:/layout_dialog_contact_sync.xml.flat",
+        "source": "com.example.callguardian.app-main-83:/layout/dialog_contact_sync.xml"
+    },
+    {
+        "merged": "com.example.callguardian.app-debug-81:/xml_backup_rules.xml.flat",
+        "source": "com.example.callguardian.app-main-83:/xml/backup_rules.xml"
+    },
+    {
+        "merged": "com.example.callguardian.app-debug-81:/xml_data_extraction_rules.xml.flat",
+        "source": "com.example.callguardian.app-main-83:/xml/data_extraction_rules.xml"
+    },
+    {
+        "merged": "com.example.callguardian.app-debug-81:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.example.callguardian.app-main-83:/mipmap-anydpi-v26/ic_launcher.xml"
+    }
+]

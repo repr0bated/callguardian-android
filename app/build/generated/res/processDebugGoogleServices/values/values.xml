@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_web_client_id" translatable="false">420281222188-88vhdre90jkjtokmmfumv2e42oapi411.apps.googleusercontent.com</string>
+    <string name="gcm_defaultSenderId" translatable="false">420281222188</string>
+    <string name="google_api_key" translatable="false">AIzaSyDdetn42lZkxCmi54Khxhc1ZfAFE62qshQ</string>
+    <string name="google_app_id" translatable="false">1:420281222188:android:26d83c954e061e056bfd89</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyDdetn42lZkxCmi54Khxhc1ZfAFE62qshQ</string>
+    <string name="google_storage_bucket" translatable="false">geminidev-479406.firebasestorage.app</string>
+    <string name="project_id" translatable="false">geminidev-479406</string>
+</resources>

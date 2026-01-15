@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.example.callguardian.app-mergeDebugResources-79:/values-v18/values-v18.xml",
+            "map": [
+                {
+                    "source": "/home/jeremy/.gradle/caches/8.13/transforms/b6503aeb66fe2639b550d138a5369aae/transformed/appcompat-1.6.1/res/values-v18/values-v18.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "48",
+                        "endOffsets": "99"
+                    }
+                }
+            ]
+        }
+    ]
+}

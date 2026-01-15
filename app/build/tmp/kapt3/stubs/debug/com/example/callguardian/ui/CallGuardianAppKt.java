@@ -1,0 +1,53 @@
+package com.example.callguardian.ui;
+
+@kotlin.Metadata(mv = {1, 9, 0}, k = 2, xi = 48, d1 = {"\u0000~\n\u0000\n\u0002\u0010\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0003\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010 \n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\u0003\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0010\u000e\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u000b\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\b\n\n\u0002\u0018\u0002\n\u0000\n\u0002\u0018\u0002\n\u0002\b\n\n\u0002\u0018\u0002\n\u0000\u001a,\u0010\u0000\u001a\u00020\u00012\u0006\u0010\u0002\u001a\u00020\u00032\f\u0010\u0004\u001a\b\u0012\u0004\u0012\u00020\u00010\u00052\f\u0010\u0006\u001a\b\u0012\u0004\u0012\u00020\u00010\u0005H\u0007\u001aJ\u0010\u0007\u001a\u00020\u00012\u0006\u0010\b\u001a\u00020\t2*\u0010\n\u001a&\u0012\u0004\u0012\u00020\f\u0012\n\u0012\b\u0012\u0004\u0012\u00020\u000e0\r\u0012\n\u0012\b\u0012\u0004\u0012\u00020\u000f0\r\u0012\u0004\u0012\u00020\u00010\u000b2\f\u0010\u0010\u001a\b\u0012\u0004\u0012\u00020\u00010\u0005H\u0003\u001a\u0010\u0010\u0011\u001a\u00020\u00012\u0006\u0010\u0012\u001a\u00020\u0013H\u0003\u001a,\u0010\u0014\u001a\u00020\u00012\u0006\u0010\u0015\u001a\u00020\u00162\u0006\u0010\u0017\u001a\u00020\u00162\u0012\u0010\u0018\u001a\u000e\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u00010\u0019H\u0003\u001a\u009e\u0002\u0010\u001a\u001a\u00020\u00012\b\b\u0002\u0010\u001b\u001a\u00020\u001c2\u0006\u0010\u001d\u001a\u00020\u001e2\u0006\u0010\u001f\u001a\u00020 2\u0006\u0010!\u001a\u00020 2\f\u0010\u0004\u001a\b\u0012\u0004\u0012\u00020\u00010\u00052\f\u0010\u0006\u001a\b\u0012\u0004\u0012\u00020\u00010\u00052\u0018\u0010\"\u001a\u0014\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020$\u0012\u0004\u0012\u00020\u00010#2\u0012\u0010%\u001a\u000e\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u00010\u00192\u0012\u0010&\u001a\u000e\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u00010\u00192\u001e\u0010\'\u001a\u001a\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u00010\u000b2\u0018\u0010(\u001a\u0014\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u00010#2\u0012\u0010)\u001a\u000e\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u00010\u00192*\u0010*\u001a&\u0012\u0004\u0012\u00020\f\u0012\n\u0012\b\u0012\u0004\u0012\u00020\u000e0\r\u0012\n\u0012\b\u0012\u0004\u0012\u00020\u000f0\r\u0012\u0004\u0012\u00020\u00010\u000b2\f\u0010+\u001a\b\u0012\u0004\u0012\u00020\u00010\u00052\f\u0010,\u001a\b\u0012\u0004\u0012\u00020\u00010\u0005H\u0003\u001aF\u0010-\u001a\u00020\u00012\u0006\u0010.\u001a\u00020/2\u0018\u0010\"\u001a\u0014\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020$\u0012\u0004\u0012\u00020\u00010#2\u0012\u0010)\u001a\u000e\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u00010\u00192\u0006\u00100\u001a\u000201H\u0003\u001a6\u00102\u001a\u00020\u00012\u0006\u00103\u001a\u00020\u00162\u0006\u00104\u001a\u00020\u00162\u0006\u00105\u001a\u00020 2\u0006\u00106\u001a\u00020\u00162\f\u00107\u001a\b\u0012\u0004\u0012\u00020\u00010\u0005H\u0003\u001a4\u00108\u001a\u00020\u00012\u0006\u0010\u001f\u001a\u00020 2\u0006\u0010!\u001a\u00020 2\f\u0010\u0004\u001a\b\u0012\u0004\u0012\u00020\u00010\u00052\f\u0010\u0006\u001a\b\u0012\u0004\u0012\u00020\u00010\u0005H\u0003\u001a\u0080\u0001\u00109\u001a\u00020\u00012\u0006\u0010\u001d\u001a\u00020\u001e2\u0012\u0010%\u001a\u000e\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u00010\u00192\u0012\u0010&\u001a\u000e\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u00010\u00192\u001e\u0010\'\u001a\u001a\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u00010\u000b2\u0018\u0010(\u001a\u0014\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u0016\u0012\u0004\u0012\u00020\u00010#2\f\u0010,\u001a\b\u0012\u0004\u0012\u00020\u00010\u0005H\u0003\u001a\u0010\u0010:\u001a\u00020 2\u0006\u0010;\u001a\u00020<H\u0002\u001a\u0010\u0010!\u001a\u00020 2\u0006\u0010;\u001a\u00020<H\u0002\u00a8\u0006="}, d2 = {"CallGuardianApp", "", "viewModel", "Lcom/example/callguardian/ui/MainViewModel;", "onRequestCallScreeningRole", "Lkotlin/Function0;", "onRequestSmsRole", "ContactSyncDialog", "syncResult", "Lcom/example/callguardian/service/ContactSyncResult$ChangesDetected;", "onApplyChanges", "Lkotlin/Function3;", "error/NonExistentClass", "", "Lcom/example/callguardian/service/ContactChange;", "Lcom/example/callguardian/service/ContactInfoField;", "onDismiss", "InteractionCard", "interaction", "Lcom/example/callguardian/data/db/PhoneInteractionEntity;", "LabeledTextField", "label", "", "value", "onValueChange", "Lkotlin/Function1;", "MainScreen", "modifier", "Landroidx/compose/ui/Modifier;", "state", "Lcom/example/callguardian/ui/MainUiState;", "hasCallScreeningRole", "", "isDefaultSmsApp", "onUpdateBlockMode", "Lkotlin/Function2;", "Lcom/example/callguardian/model/BlockMode;", "onSaveNumLookupKey", "onSaveAbstractKey", "onSaveCustomEndpoint", "onSaveHuggingFaceCredentials", "onAnalyzeContactSync", "onApplyContactSyncChanges", "onResetContactSyncState", "onToggleDarkMode", "ProfileCard", "profile", "Lcom/example/callguardian/data/db/PhoneProfileEntity;", "syncState", "Lcom/example/callguardian/ui/ContactSyncUiState;", "RoleRow", "title", "description", "isGranted", "actionLabel", "onAction", "RoleStatusCard", "SettingsCard", "isCallScreeningRoleHeld", "context", "Landroid/content/Context;", "app_debug"})
+public final class CallGuardianAppKt {
+    
+    @kotlin.OptIn(markerClass = {androidx.compose.material3.ExperimentalMaterial3Api.class})
+    @androidx.compose.runtime.Composable()
+    public static final void CallGuardianApp(@org.jetbrains.annotations.NotNull()
+    com.example.callguardian.ui.MainViewModel viewModel, @org.jetbrains.annotations.NotNull()
+    kotlin.jvm.functions.Function0<kotlin.Unit> onRequestCallScreeningRole, @org.jetbrains.annotations.NotNull()
+    kotlin.jvm.functions.Function0<kotlin.Unit> onRequestSmsRole) {
+    }
+    
+    @androidx.compose.runtime.Composable()
+    private static final void MainScreen(androidx.compose.ui.Modifier modifier, com.example.callguardian.ui.MainUiState state, boolean hasCallScreeningRole, boolean isDefaultSmsApp, kotlin.jvm.functions.Function0<kotlin.Unit> onRequestCallScreeningRole, kotlin.jvm.functions.Function0<kotlin.Unit> onRequestSmsRole, kotlin.jvm.functions.Function2<? super java.lang.String, ? super com.example.callguardian.model.BlockMode, kotlin.Unit> onUpdateBlockMode, kotlin.jvm.functions.Function1<? super java.lang.String, kotlin.Unit> onSaveNumLookupKey, kotlin.jvm.functions.Function1<? super java.lang.String, kotlin.Unit> onSaveAbstractKey, kotlin.jvm.functions.Function3<? super java.lang.String, ? super java.lang.String, ? super java.lang.String, kotlin.Unit> onSaveCustomEndpoint, kotlin.jvm.functions.Function2<? super java.lang.String, ? super java.lang.String, kotlin.Unit> onSaveHuggingFaceCredentials, kotlin.jvm.functions.Function1<? super java.lang.String, kotlin.Unit> onAnalyzeContactSync, kotlin.jvm.functions.Function3<? super error.NonExistentClass, ? super java.util.List<com.example.callguardian.service.ContactChange>, ? super java.util.List<com.example.callguardian.service.ContactInfoField>, kotlin.Unit> onApplyContactSyncChanges, kotlin.jvm.functions.Function0<kotlin.Unit> onResetContactSyncState, kotlin.jvm.functions.Function0<kotlin.Unit> onToggleDarkMode) {
+    }
+    
+    @androidx.compose.runtime.Composable()
+    private static final void RoleStatusCard(boolean hasCallScreeningRole, boolean isDefaultSmsApp, kotlin.jvm.functions.Function0<kotlin.Unit> onRequestCallScreeningRole, kotlin.jvm.functions.Function0<kotlin.Unit> onRequestSmsRole) {
+    }
+    
+    @androidx.compose.runtime.Composable()
+    private static final void RoleRow(java.lang.String title, java.lang.String description, boolean isGranted, java.lang.String actionLabel, kotlin.jvm.functions.Function0<kotlin.Unit> onAction) {
+    }
+    
+    @androidx.compose.runtime.Composable()
+    private static final void ProfileCard(com.example.callguardian.data.db.PhoneProfileEntity profile, kotlin.jvm.functions.Function2<? super java.lang.String, ? super com.example.callguardian.model.BlockMode, kotlin.Unit> onUpdateBlockMode, kotlin.jvm.functions.Function1<? super java.lang.String, kotlin.Unit> onAnalyzeContactSync, com.example.callguardian.ui.ContactSyncUiState syncState) {
+    }
+    
+    @androidx.compose.runtime.Composable()
+    private static final void InteractionCard(com.example.callguardian.data.db.PhoneInteractionEntity interaction) {
+    }
+    
+    @androidx.compose.runtime.Composable()
+    private static final void SettingsCard(com.example.callguardian.ui.MainUiState state, kotlin.jvm.functions.Function1<? super java.lang.String, kotlin.Unit> onSaveNumLookupKey, kotlin.jvm.functions.Function1<? super java.lang.String, kotlin.Unit> onSaveAbstractKey, kotlin.jvm.functions.Function3<? super java.lang.String, ? super java.lang.String, ? super java.lang.String, kotlin.Unit> onSaveCustomEndpoint, kotlin.jvm.functions.Function2<? super java.lang.String, ? super java.lang.String, kotlin.Unit> onSaveHuggingFaceCredentials, kotlin.jvm.functions.Function0<kotlin.Unit> onToggleDarkMode) {
+    }
+    
+    @androidx.compose.runtime.Composable()
+    private static final void LabeledTextField(java.lang.String label, java.lang.String value, kotlin.jvm.functions.Function1<? super java.lang.String, kotlin.Unit> onValueChange) {
+    }
+    
+    private static final boolean isCallScreeningRoleHeld(android.content.Context context) {
+        return false;
+    }
+    
+    private static final boolean isDefaultSmsApp(android.content.Context context) {
+        return false;
+    }
+    
+    @androidx.compose.runtime.Composable()
+    private static final void ContactSyncDialog(com.example.callguardian.service.ContactSyncResult.ChangesDetected syncResult, kotlin.jvm.functions.Function3<? super error.NonExistentClass, ? super java.util.List<com.example.callguardian.service.ContactChange>, ? super java.util.List<com.example.callguardian.service.ContactInfoField>, kotlin.Unit> onApplyChanges, kotlin.jvm.functions.Function0<kotlin.Unit> onDismiss) {
+    }
+}
