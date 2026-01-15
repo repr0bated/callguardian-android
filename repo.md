@@ -2,7 +2,7 @@
 #
 ## Project Description
 **Call Guardian** is an Android application designed for advanced call and message screening. It performs real-time reverse lookups against multiple data sources and uses AI-driven risk scoring to help users identify and manage spam interactions.
-
+#
 ## Core Tech Stack
 - **Language**: Kotlin 1.9
 - **UI Framework**: Jetpack Compose (Material 3)
