@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/repr0bated/callguardian-android/schemas/methods/guardian.report.scam.v1.output.json",
+  "title": "ReportScamOutput",
+  "description": "Result of guardian.report.scam@v1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "destination",
+    "composerOpened"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Screening event id. Bound from the trusted context.",
+      "title": "Screening event"
+    },
+    "destination": {
+      "type": "string",
+      "maxLength": 64,
+      "title": "Report to"
+    },
+    "composerOpened": {
+      "type": "boolean",
+      "title": "Composer opened"
+    }
+  }
+}
