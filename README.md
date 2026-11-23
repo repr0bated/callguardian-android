@@ -1,120 +1,124 @@
 # Call Guardian
 
-Call Guardian is an Android call- and message-screening app that performs reverse lookups against configurable free data sources, lets you reject or end calls, block future interactions, or save trusted numbers. The project is implemented in Kotlin with Jetpack Compose, Hilt DI, and Room persistence.
+**A scam shield for your phone that reads your texts and calls on the device, and can only act through typed, schema-checked methods that leave a receipt.**
 
-## Key Features
-- **Call interception** via `CallScreeningService` with quick actions (reject, block, allow, save).
-- **SMS interception** for the default SMS role with reverse lookup notifications and blocklist enforcement.
-- **Reverse lookup pipeline** with built-in connectors for [NumLookup API](https://numlookupapi.com/) and [Abstract API](https://www.abstractapi.com/phone-validation-api), plus a configurable custom JSON endpoint.
-- **Optional AI risk scoring** via Hugging Face Inference API for spam probability estimates on call/SMS metadata.
-- **Blocklist management UI** to toggle call/message blocking modes per number.
-- **Local data store** (Room) for lookup cache and interaction history.
-- **Notification actions** for one-tap block/allow/reject/save flows.
+Call Guardian screens incoming SMS and calls. A private on-device model (Gemma 4 / Gemini Nano 4 through **Firebase AI Logic** hybrid inference) does the first read with no network, so it works in airplane mode. When you want a deeper explanation, a *redacted* copy goes to cloud Gemini, and only after you tap.
 
-## Project Layout
+The model never touches your phone directly. It can only **propose one typed method** from a versioned registry, such as `guardian.call.block@v1` or `guardian.sms.quarantine@v1`. That proposal is validated against JSON Schema and a capability policy before anything runs, and every attempt writes a **receipt**. *The schema is the single source of truth for actions and their UI.* The same JSON Schema files generate the Kotlin types, validate model output, and render the confirmation sheets and receipt screens at runtime.
 
+Personal project by Jeremy Hobson ([@repr0bated](https://github.com/repr0bated)). Licensed Apache-2.0. Built for #BuildHybridAI 2026 (Android track).
+
+---
+
+## Headline: typed methods, schemas and receipts
+
+| Method id | Alias | Capability | Runs on | Auto-run? |
+|---|---|---|---|---|
+| `guardian.call.block@v1` | `block_number` | `telephony.block` | device | yes, if risk ≥ HIGH, confidence ≥ max(85, your threshold), not a contact |
+| `guardian.call.allow@v1` | `allow_number` | `telephony.allow` | device | never (tap) |
+| `guardian.call.reject@v1` | `reject_call` | `telephony.screen` | device | yes (calls only, risk ≥ HIGH) |
+| `guardian.sms.quarantine@v1` | `quarantine_sms` | `sms.quarantine` | device | yes (SMS only, risk ≥ MEDIUM) |
+| `guardian.report.scam@v1` | `report_scam` | `report.external` | device | never (opens 7726 composer) |
+| `guardian.contact.save@v1` | `save_contact` | `contacts.write` | device | never (opens contact editor) |
+| `guardian.cloud.explain@v1` | `explain_cloud` | `net.cloud_ai` | **cloud** | never (consent sheet shows the exact redacted text) |
+
+How a proposal turns into a side effect:
+
+```mermaid
+flowchart LR
+  SMS[SMS_RECEIVED / CallScreeningService] --> R[Tier 1: rules<br/>HeuristicScanner, µs, offline]
+  R --> D[Tier 2: on-device Gemma 4 / Nano 4<br/>Firebase AI Logic ONLY_ON_DEVICE]
+  D -->|raw JSON| V{scam_verdict.schema.json}
+  V -->|invalid| X[discard, rules decision stands]
+  V -->|valid: method + reasons| P{CapabilityPolicy<br/>registry.json}
+  P -->|DENY| RC[(Receipt: DENIED)]
+  P -->|OFFER| S[Schema-rendered<br/>confirm sheet]
+  P -->|AUTO| B[MethodBinder<br/>trusted args only]
+  S --> B
+  B --> I{method input schema}
+  I --> H[Handler on generated Kotlin type]
+  H --> O{method output schema}
+  O --> RC2[(Receipt: OK / INVALID_* / FAILED)]
+  U[User taps Explain] --> S
+  S -->|explain_cloud, redacted| C[Tier 3: cloud Gemini<br/>Firebase AI Logic ONLY_IN_CLOUD]
+  C --> V2{deep_analysis.schema.json} --> O
 ```
-CallGuardian/
-├── app/
-│   ├── build.gradle.kts        # Module configuration (Compose, Hilt, Room, etc.)
-│   ├── src/main/
-│   │   ├── AndroidManifest.xml # Service/receiver declarations and permissions
-│   │   ├── java/com/example/callguardian/
-│   │   │   ├── CallGuardianApplication.kt
-│   │   │   ├── MainActivity.kt
-│   │   │   ├── data/…          # Room entities/DAO/repository + DataStore prefs
-│   │   │   ├── lookup/…        # Reverse lookup manager and sources
-│   │   │   ├── notifications/… # Notification manager + action receiver
-│   │   │   ├── service/…       # CallScreeningService implementation
-│   │   │   └── sms/…           # SMS BroadcastReceiver
-│   │   └── res/…               # Compose theme, strings, icons
-├── build.gradle.kts            # Root Gradle version catalog
-├── gradle.properties
-└── settings.gradle.kts
+
+* **Registry**: [`app/src/main/assets/schemas/registry.json`](app/src/main/assets/schemas/registry.json) (version `2026.11.1`), checked at load against `registry.schema.json`. Each method declares its capability, `execution: device|cloud`, channels, risk and confidence bounds, `contactSafe`, `autoApply`, `requiresConsent`, and paths to its input and output JSON Schemas under `schemas/methods/`.
+* **Generated Kotlin types**: the `generateSchemaTypes` Gradle task (json-kotlin-schema-codegen) turns `registry.schema.json` and every `methods/*.json` into `@Serializable` classes in `com.example.callguardian.methods.gen` (`build/generated/source/schemas`). Handlers in [`MethodHandlers.kt`](app/src/main/java/com/example/callguardian/methods/MethodHandlers.kt) take and return only those generated types. None of them are hand-written.
+* **The model proposes, it does not act**: the model emits `{riskLevel, category, confidence, reasons, method, advice}`. Arguments such as the phone number and event id are bound from trusted app state by [`MethodBinder`](app/src/main/java/com/example/callguardian/methods/MethodBinder.kt), never taken from model text. The bound input is still validated against the method's input schema.
+* **Policy**: [`CapabilityPolicy`](app/src/main/java/com/example/callguardian/methods/CapabilityPolicy.kt) enforces the declared bounds:
+  * it never blocks contacts or trusted senders;
+  * it falls back from block to quarantine or reject when confidence is short;
+  * cloud proposals are only ever *offered*, never run automatically;
+  * cloud methods are denied when cloud is unavailable.
+* **Receipts**: [`MethodDispatcher`](app/src/main/java/com/example/callguardian/methods/MethodDispatcher.kt) writes a Room row (`method_receipts`) for every attempt. Each row records the input JSON, registry version, input/output schema ids, where it ran, who proposed it, how it was dispatched (AUTO / USER_CONFIRMED / DENY), the status (OK / DENIED / INVALID_INPUT / INVALID_OUTPUT / FAILED), notes and duration. They appear on the **Receipts** tab.
+* **Schema-driven UI**: [`schemaui/SchemaForm.kt`](app/src/main/java/com/example/callguardian/schemaui/SchemaForm.kt) maps any JSON Schema to fields: title, description, required markers, enums as chips, `readOnly` bound fields with a lock, `format: phone` with a phone keyboard, `format: epoch-millis` as a date, and lists. [`SchemaRenderer.kt`](app/src/main/java/com/example/callguardian/schemaui/SchemaRenderer.kt) renders the confirmation sheet with live validation, plus read-only receipt input and output views. To add a method you add a registry entry and two schema files, then a handler. Its confirmation and receipt screens come from the schema with no new UI code. `SchemaFormTest.everyRegistrySchemaRendersWithoutUnknownFields` enforces this.
+
+## Where Firebase AI Logic is called
+
+All model calls are in [`ai/HybridScamAnalyzer.kt`](app/src/main/java/com/example/callguardian/ai/HybridScamAnalyzer.kt):
+
+* **Triage, on-device.** `Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel(..., onDeviceConfig = OnDeviceConfig(mode = ONLY_ON_DEVICE` (private mode) `| PREFER_ON_DEVICE, modelOption = PREVIEW_FAST | PREVIEW | STABLE, maxOutputTokens = 256, temperature = 0.1))`.
+  * `PREVIEW_FAST` is Gemini Nano 4 Fast (Gemma 4 E2B). `PREVIEW` is Nano 4 Full (Gemma 4 E4B).
+  * Called with `model.generateObject(ScamVerdict.firebaseAISchema(), prompt)`, using `@Generable` classes in `ai/AiSchemas.kt`.
+  * `response.inferenceSource` records ON_DEVICE vs IN_CLOUD for every verdict.
+* **Model lifecycle.** `onDeviceExtension.checkStatus() / download() / warmUp() / getModelName()` drive the Home screen's model card.
+* **Deep analysis, cloud.** A second `generativeModel` with `OnDeviceConfig(mode = ONLY_IN_CLOUD)` and `generateObject(DeepAnalysis.firebaseAISchema(), redactedPrompt)`. It is only reachable through the `guardian.cloud.explain@v1` handler.
+* **App Check.** [`firebase/FirebaseBootstrap.kt`](app/src/main/java/com/example/callguardian/firebase/FirebaseBootstrap.kt) installs the Play Integrity provider (`src/release`) or the debug provider (`src/debug`). The debug token appears in Settings → Cloud & App Check.
+
+Gemma 4 runs **through Firebase AI Logic** (`OnDeviceModelOption.PREVIEW*`, which uses AICore). There is no MediaPipe or side-loaded weights.
+
+## What was built during the submission period (Nov 2026)
+
+The original repo was a lookup-only screening app that no longer built. On the `buildhybridai` branch:
+
+* **Hybrid inference:** a three-tier pipeline (rules, then on-device Gemma 4 via Firebase AI Logic, then opt-in cloud Gemini) with redaction (`screening/Redactor.kt`), a private mode, and a foreground-only on-device queue. AICore refuses background inference, so events wait as PENDING and run when the app opens.
+* **Typed methods:** the registry, capability policy, binder, dispatcher, Room receipts, Kotlin types generated from JSON Schema, and a schema-driven Compose renderer.
+* **Rewritten app:** a new Compose UI (Home, Activity, event detail with a full pipeline trace, Receipts, Lab, Settings, Lists), a new manifest and permission model, and a new icon.
+* **Fixes to the original app:**
+  * **Build:** broken version catalog (duplicate `from()`, wrong `libs.libraries.*` refs), a non-existent AGP 8.14.0, a stale compose compiler config, and committed `app/build` and `.gradle` outputs (now untracked).
+  * **SMS role:** the app demanded the default-SMS role without implementing a default SMS app, and called `abortBroadcast()` on a non-ordered broadcast. It now uses `SMS_RECEIVED` with `RECEIVE_SMS` only.
+  * **Permissions:** removed SEND_SMS, WRITE_CONTACTS, MMS/WAP, ANSWER_PHONE_CALLS and READ_CALL_LOG.
+  * **Calls:** removed the bogus `foregroundServiceType` on the screening service and the DIAL intent filter. Fixed the missing `android.telecom.Call` import (a compile error). Blocked calls no longer skip the call log.
+  * **Lookups:** Moshi lacked `KotlinJsonAdapterFactory`, so lookups crashed at runtime. OkHttp logging leaked API keys from URLs.
+  * **Misc:** the launcher icon used theme attrs and rendered wrong. Contact lookup needed an exact match and had no permission guard. XML Fragments were mixed into Compose. The Hugging Face scoring was replaced.
+* **Tests and builds:** 38 JVM unit tests (schema renderer mapping, registry/enum consistency, binder output validates for every method and channel, capability policy, verdict validator, rules, redaction). The debug APK and an R8-minified, release-signed APK both build.
+
+## Build
+
+Requires JDK 21 and Android SDK 36.
+
+```bash
+./gradlew assembleDebug testDebugUnitTest        # works with or without google-services.json
 ```
 
-## Prerequisites
+* **Firebase config.** Put `google-services.json` at **`app/google-services.json`** (gitignored). The Google Services plugin is applied only when that file exists. Without it the app still builds and runs rules plus on-device AI, and cloud analysis shows as "not configured". You can also pass `-PFIREBASE_API_KEY= -PFIREBASE_APP_ID= -PFIREBASE_PROJECT_ID=` or the matching env vars.
+* **Package names.** `io.github.repr0bated.callguardian` (release) and `io.github.repr0bated.callguardian.debug` (debug).
+* **Release signing.** Set `CG_KEYSTORE`, `CG_KEYSTORE_PASSWORD`, `CG_KEY_ALIAS` and `CG_KEY_PASSWORD`, then run `./gradlew assembleRelease`. Keep the keystore outside the repo; `*.jks` is gitignored.
+* **Cloud model.** Defaults to `gemini-3.5-flash-lite`. Override with `-PCLOUD_MODEL=`.
 
-- Android Studio Giraffe (2022.3.1) or newer with Android Gradle Plugin 8.2+
-- Android SDK Platform 34, Build-Tools 34.x, and Google Play Services repository
-- JDK 17 (matching the Gradle/AGP configuration)
-- Local Gradle wrapper (`gradlew`). Generate it once via `gradle wrapper --gradle-version 8.5` (or create from Android Studio) if it isn’t already present.
+## Install on a Galaxy S25 Ultra (stock, locked bootloader)
 
-## First-Time Setup
+1. **Update AICore and enroll in the AICore Developer Preview.** This is required for Gemma 4 / Nano 4 (`PREVIEW*` models).
+   1. Update **AICore** and **Private Compute Services** from the Play Store.
+   2. Enable **Developer options**: Settings → About phone → Software information → tap *Build number* 7×.
+   3. Go to Settings → Developer options → **AICore Settings** → enable **AICore Developer Preview** → Accept.
+   4. Open the AICore app (or this app's Home → *Download model*) and let the Nano 4 model download on Wi-Fi.
+   5. AICore does not work with an unlocked bootloader. Jeremy's device is stock, so this is fine.
+2. Install the APK: `adb install -r callguardian.apk`, or open the file on the phone.
+3. **Android 15 restricted settings.** For a sideloaded app, the SMS permission may be greyed out. Go to Settings → Apps → Call Guardian → ⋮ → **Allow restricted settings**, then grant SMS.
+4. In the app's Home screen, allow **call screening** (role), **SMS**, **contacts** and **notifications**.
+5. For cloud analysis in a debug build, open Settings → Cloud & App Check and copy the **debug token**. Register it in the Firebase console under App Check → Manage debug tokens.
 
-1. Open the project in Android Studio and let it sync/create the Gradle wrapper.
-2. Create a keystore (for debug and release) if you don’t already have one. Keep it outside of VCS and configure via **Build > Generate Signed Bundle/APK…**.
-3. Acquire optional reverse lookup credentials:
-   - [NumLookup API](https://numlookupapi.com/) free tier API key.
-- [Abstract Phone Validation](https://www.abstractapi.com/phone-validation-api) API key.
-- Any additional JSON endpoint that returns caller details (configure in Settings in-app).
-- (Optional) A free [Hugging Face](https://huggingface.co/) access token if you want AI-powered risk scoring.
-4. Install the app on a physical device running Android 10 (API 29) or newer. Emulators do not support real call/SMS interception.
+See [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md) for the console steps, [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) for the 3-minute demo, and [`docs/DEVPOST.md`](docs/DEVPOST.md) for the submission text.
 
-## Granting The Required Roles & Permissions
+## Limits (honest list)
 
-After installing the app:
-
-1. Launch Call Guardian.
-2. Accept the `POST_NOTIFICATIONS` permission prompt (Android 13+).
-3. Tap **Activate** to grant the **Call Screening** role. You must be the default call screening app before the OS delivers incoming call events.
-4. Tap **Set Default** to make Call Guardian the **default SMS** app (required to receive SMS broadcasts). You can revert later via Settings.
-5. From system settings, also grant:
-   - `READ_CALL_LOG` and `READ_PHONE_STATE` permissions.
-   - `RECEIVE_SMS`, `READ_SMS`, and `RECEIVE_MMS` permissions (should be automatic once the app is default SMS, but verify under App Info).
-   - `ANSWER_PHONE_CALLS` to let the reject action end active calls.
-   - `READ/WRITE_CONTACTS` if you want the one-tap “Save Contact” action.
-
-## Configuring Reverse Lookup Sources
-
-- Open the app, scroll to **Lookup Services**, and paste the API keys you obtained. Keys are stored in Jetpack DataStore and injected into lookup sources.
-- For the custom endpoint:
-  - Provide a URL containing `{number}` as a placeholder (e.g., `https://your-free-endpoint.example/lookup?phone={number}`).
-  - Optional header name/value support lets you set API tokens (e.g., `Authorization: Bearer …`).
-  - Responses should be JSON objects; the app attempts to map common fields (`display_name`, `carrier`, `region`, `spam_score`). Everything else is stored in the raw payload for future extensions.
-- Lookups execute sequentially; the first source returning data wins. Extend `lookup/sources` with additional connectors if needed (bind them in `LookupModule`).
-- For AI augmentation, add your Hugging Face API key and model ID (e.g., `mrm8488/bert-tiny-finetuned-sms-spam-detection`) in-app. The app sends a lightweight text prompt with the number metadata/message to `https://api-inference.huggingface.co/models/{modelId}` and annotates results with the model’s label and confidence.
-
-## Building Debug & Release APKs
-
-1. Ensure the Gradle wrapper exists (`./gradlew`). If not, create it as noted in **Prerequisites**.
-2. For a debug build:
-   ```bash
-   ./gradlew assembleDebug
-   ```
-   Install the resulting APK from `app/build/outputs/apk/debug/`.
-3. For a release build suitable for Play Store upload:
-   ```bash
-   ./gradlew assembleRelease
-   ```
-   Sign the APK/AAB with your upload keystore via Android Studio or the `signingConfig` (keystore files/credentials must stay outside source control).
-4. Run instrumentation/unit tests as needed:
-   ```bash
-   ./gradlew testDebugUnitTest connectedDebugAndroidTest
-   ```
-
-## Preparing For Play Store Submission
-
-- Update `app/build.gradle.kts` with proper `applicationId`, `versionCode`, and `versionName` before release builds.
-- Provide a privacy policy explaining what data is collected (call/SMS metadata) and how it is stored locally. Mention that reverse lookup requests call third-party services and comply with their terms of use.
-- Supply runtime rationale dialogs if you want more context when requesting sensitive permissions (CALL_LOG, SMS, CONTACTS).
-- Verify target API level >= 33 (currently 34) and that all permission declarations fall under permitted use-cases. Attach a short video capture demonstrating call screening behavior if Google requests it during review.
-- Use Play Console’s **App content** section to declare sensitive permissions and roles (Call Screening, Default SMS, Read/Send SMS).
-
-## Extending The Project
-
-- Implement additional reverse lookup providers by creating new `ReverseLookupSource` implementations and binding them with `@IntoSet` in `LookupModule`.
-- Enhance call handling (e.g., auto voicemail, message replies) via `TelecomManager` APIs.
-- Sync blocklists with server storage or share data across devices with DataStore/Cloud sync.
-- Integrate WorkManager to refresh stale lookup data periodically.
-
-## Notes & Limitations
-
-- Call/SMS interception requires the app to be the default handler. Only one app can hold those roles at a time.
-- Reverse lookup accuracy depends entirely on the upstream APIs. Free tiers may rate-limit or restrict commercial use; review their ToS.
-- The notification “Reject Call” action depends on `ANSWER_PHONE_CALLS` permission and may fail on some OEM builds.
-- Emulator builds cannot receive real telephony broadcasts; use a physical device for validation.
+* On-device inference is foreground-only, English-first, capped at about 4k tokens of input, and subject to AICore per-app quotas. Calls are decided by rules within Telecom's 5-second budget, and the model reviews them afterwards.
+* There is no call audio or transcript: calls are judged on metadata (hidden caller id, repeat calls, optional lookup).
+* Play Integrity fails for sideloaded release APKs, so the demo uses the debug build with the debug App Check provider.
 
 ## License
 
-No explicit license is provided. Add one if you intend to distribute the source.
+Apache License 2.0, Copyright 2026 Jeremy Hobson. See [LICENSE](LICENSE).

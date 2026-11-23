@@ -16,3 +16,10 @@
 *.keystore
 keystore.properties
 google-services.json
+
+# build outputs
+.gradle/
+app/build/
+
+# root build outputs
+build/
