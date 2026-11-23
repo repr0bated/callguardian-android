@@ -1,75 +1,78 @@
 package com.example.callguardian
 
+import android.Manifest
 import android.app.role.RoleManager
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Telephony
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.core.content.ContextCompat
+import androidx.compose.runtime.mutableStateOf
+import com.example.callguardian.ui.AppViewModel
 import com.example.callguardian.ui.CallGuardianApp
-import com.example.callguardian.ui.MainViewModel
+import com.example.callguardian.ui.SetupActions
+import com.example.callguardian.ui.theme.CallGuardianTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val viewModel: MainViewModel by viewModels()
-    private val notificationPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    private val vm: AppViewModel by viewModels()
+    private val openEvent = mutableStateOf<Long?>(null)
+
+    private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { vm.refresh() }
+    private val roleLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { vm.refresh() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-
-        requestNotificationPermissionIfNeeded()
-
+        handleIntent(intent)
+        val actions = SetupActions(
+            requestScreeningRole = ::requestScreeningRole,
+            requestSms = { permissionLauncher.launch(arrayOf(Manifest.permission.RECEIVE_SMS)) },
+            requestContacts = { permissionLauncher.launch(arrayOf(Manifest.permission.READ_CONTACTS)) },
+            requestNotifications = {
+                if (Build.VERSION.SDK_INT >= 33) permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+            },
+            openAppSettings = {
+                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
+            },
+        )
         setContent {
-            CallGuardianApp(
-                viewModel = viewModel,
-                onRequestCallScreeningRole = { requestCallScreeningRole() },
-                onRequestSmsRole = { requestSmsRole() }
-            )
-        }
-    }
-
-    private fun requestNotificationPermissionIfNeeded() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val granted = ContextCompat.checkSelfPermission(
-                this,
-                android.Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-            if (!granted) {
-                notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            CallGuardianTheme {
+                CallGuardianApp(vm, actions, openEvent.value, onEventOpened = { openEvent.value = null })
             }
         }
     }
 
-    private fun requestCallScreeningRole() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val roleManager = getSystemService(Context.ROLE_SERVICE) as RoleManager
-            if (roleManager.isRoleAvailable(RoleManager.ROLE_CALL_SCREENING) &&
-                !roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING)
-            ) {
-                val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_CALL_SCREENING)
-                startActivity(intent)
-            }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        vm.refresh() // also drains on-device analysis queued while we were in the background
+    }
+
+    private fun handleIntent(i: Intent?) {
+        val id = i?.getLongExtra(EXTRA_EVENT_ID, -1) ?: -1
+        if (id > 0) openEvent.value = id
+    }
+
+    private fun requestScreeningRole() {
+        val rm = getSystemService(RoleManager::class.java) ?: return
+        if (rm.isRoleAvailable(RoleManager.ROLE_CALL_SCREENING) && !rm.isRoleHeld(RoleManager.ROLE_CALL_SCREENING)) {
+            roleLauncher.launch(rm.createRequestRoleIntent(RoleManager.ROLE_CALL_SCREENING))
         }
     }
 
-    private fun requestSmsRole() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            val defaultSms = Telephony.Sms.getDefaultSmsPackage(this)
-            if (defaultSms != packageName) {
-                val intent = Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT).apply {
-                    putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName)
-                }
-                startActivity(intent)
-            }
-        }
+    companion object {
+        const val EXTRA_EVENT_ID = "event_id"
     }
 }
