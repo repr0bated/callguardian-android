@@ -3,55 +3,44 @@ package com.example.callguardian.sms
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.provider.Telephony
-import com.example.callguardian.data.repository.LookupRepository
-import com.example.callguardian.model.InteractionDirection
-import com.example.callguardian.model.InteractionType
-import com.example.callguardian.notifications.LookupNotificationManager
+import com.example.callguardian.screening.ScreeningEngine
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import timber.log.Timber
 import javax.inject.Inject
 
+/**
+ * Listens for SMS_RECEIVED (any app holding RECEIVE_SMS gets it; no default-SMS role needed).
+ * The original app required the default SMS role but didn't implement the components Android
+ * demands of a default SMS app, and called abortBroadcast() on a non-ordered broadcast.
+ */
 @AndroidEntryPoint
 class SmsReceiver : BroadcastReceiver() {
-
-    @Inject lateinit var lookupRepository: LookupRepository
-    @Inject lateinit var notificationManager: LookupNotificationManager
-
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    @Inject lateinit var engine: ScreeningEngine
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
-            val originating = messages.firstOrNull()?.displayOriginatingAddress ?: return
-            val body = messages.joinToString(separator = "") { it.messageBody ?: "" }
-
-            val pendingResult = goAsync()
-
-            scope.launch {
-                val lookupOutcome = lookupRepository.performLookup(
-                    phoneNumber = originating,
-                    type = InteractionType.SMS,
-                    direction = InteractionDirection.INCOMING,
-                    messageBody = body
-                )
-                val profile = lookupRepository.getProfile(originating)
-                if (profile?.shouldBlockMessages() == true) {
-                    abortBroadcast()
+        if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
+        val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return
+        if (messages.isEmpty()) return
+        // A multipart SMS arrives as several PDUs; group by sender.
+        val bySender = messages.groupBy { it.displayOriginatingAddress ?: it.originatingAddress }
+        val pending = goAsync()
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            try {
+                withTimeoutOrNull(9_000) {
+                    bySender.forEach { (sender, parts) ->
+                        engine.screenSms(sender, parts.joinToString("") { it.displayMessageBody ?: it.messageBody.orEmpty() })
+                    }
                 }
-                notificationManager.notifyLookupResult(
-                    phoneNumber = originating,
-                    lookupResult = lookupOutcome.lookupResult,
-                    existingProfile = profile,
-                    aiAssessment = lookupOutcome.aiAssessment,
-                    contactInfo = lookupOutcome.contactInfo,
-                    includeRejectAction = false
-                )
-                pendingResult.finish()
+            } catch (t: Throwable) {
+                Timber.e(t, "SMS screening failed")
+            } finally {
+                pending.finish()
             }
         }
     }

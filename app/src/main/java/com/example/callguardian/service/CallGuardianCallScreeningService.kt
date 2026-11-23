@@ -1,81 +1,59 @@
 package com.example.callguardian.service
 
+import android.telecom.Call
 import android.telecom.CallScreeningService
-import com.example.callguardian.data.repository.LookupRepository
-import com.example.callguardian.model.InteractionDirection
-import com.example.callguardian.model.InteractionType
-import com.example.callguardian.notifications.LookupNotificationManager
+import android.telecom.TelecomManager
+import com.example.callguardian.screening.ScreeningEngine
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import timber.log.Timber
 import javax.inject.Inject
 
+/**
+ * Bound by Telecom when Call Guardian holds ROLE_CALL_SCREENING. Must call respondToCall()
+ * within ~5 s, so only the rule engine + a 1.5 s lookup run here. The on-device model reviews
+ * the call afterwards when the user opens the alert.
+ */
 @AndroidEntryPoint
 class CallGuardianCallScreeningService : CallScreeningService() {
 
-    @Inject lateinit var lookupRepository: LookupRepository
-    @Inject lateinit var notificationManager: LookupNotificationManager
+    @Inject lateinit var engine: ScreeningEngine
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val job = SupervisorJob()
-    private val serviceScope = CoroutineScope(job + Dispatchers.IO)
-
-    override fun onScreenCall(callDetails: Call.Details) {
-        val handle = callDetails.handle ?: run {
-            respondToCall(callDetails, CallResponse.Builder().build())
+    override fun onScreenCall(details: Call.Details) {
+        val startedAt = System.currentTimeMillis()
+        if (details.callDirection != Call.Details.DIRECTION_INCOMING) {
+            respondToCall(details, CallResponse.Builder().build())
             return
         }
-        val number = handle.schemeSpecificPart
-        if (number.isNullOrBlank()) {
-            respondToCall(callDetails, CallResponse.Builder().build())
-            return
-        }
-
-        serviceScope.launch {
-            val normalized = number.filter { it.isDigit() || it == '+' }
-            val profile = lookupRepository.getProfile(normalized)
-            val shouldBlock = profile?.shouldBlockCalls() == true
-
-            if (shouldBlock) {
-                respondToCall(callDetails, CallResponse.Builder()
-                    .setDisallowCall(true)
-                    .setRejectCall(true)
-                    .setSkipCallLog(true)
-                    .setSkipNotification(true)
-                    .build()
-                )
-                notificationManager.notifyBlockedCall(normalized, profile)
-                return@launch
+        val number = details.handle?.schemeSpecificPart
+        val hidden = details.handlePresentation != TelecomManager.PRESENTATION_ALLOWED
+        scope.launch {
+            var eventId: Long? = null
+            val decision = try {
+                withTimeoutOrNull(3_500) { engine.screenCall(number, hidden, startedAt) }?.also { eventId = it.second }?.first
+            } catch (t: Throwable) {
+                Timber.e(t, "Call screening failed"); null
             }
-
-            val lookupOutcome = withTimeoutOrNull(LOOKUP_TIMEOUT_MS) {
-                lookupRepository.performLookup(
-                    phoneNumber = normalized,
-                    type = InteractionType.CALL,
-                    direction = InteractionDirection.INCOMING
-                )
-            }
-
-            respondToCall(callDetails, CallResponse.Builder().setDisallowCall(false).build())
-
-            notificationManager.notifyLookupResult(
-                phoneNumber = normalized,
-                lookupResult = lookupOutcome?.lookupResult,
-                existingProfile = lookupRepository.getProfile(normalized),
-                aiAssessment = lookupOutcome?.aiAssessment,
-                contactInfo = lookupOutcome?.contactInfo
-            )
+            val response = CallResponse.Builder().apply {
+                if (decision?.reject == true) {
+                    setDisallowCall(true); setRejectCall(true); setSkipCallLog(false); setSkipNotification(true)
+                } else if (decision?.silence == true) {
+                    setSilenceCall(true)
+                }
+            }.build()
+            respondToCall(details, response)
+            eventId?.let { runCatching { engine.afterCall(it) } }
         }
     }
 
     override fun onDestroy() {
+        scope.cancel()
         super.onDestroy()
-        job.cancel()
-    }
-
-    companion object {
-        private const val LOOKUP_TIMEOUT_MS = 2500L
     }
 }
