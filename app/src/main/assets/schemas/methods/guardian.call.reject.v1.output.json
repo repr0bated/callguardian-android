@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/repr0bated/callguardian-android/schemas/methods/guardian.call.reject.v1.output.json",
+  "title": "RejectCallOutput",
+  "description": "Result of guardian.call.reject@v1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mode",
+    "applied",
+    "respondedWithinMs"
+  ],
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": [
+        "SILENCE",
+        "REJECT"
+      ],
+      "title": "Action"
+    },
+    "applied": {
+      "type": "boolean",
+      "title": "Applied"
+    },
+    "respondedWithinMs": {
+      "type": "integer",
+      "minimum": 0,
+      "title": "Responded within (ms)"
+    }
+  }
+}

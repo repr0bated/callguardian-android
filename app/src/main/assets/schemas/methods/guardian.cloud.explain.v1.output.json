@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/repr0bated/callguardian-android/schemas/methods/guardian.cloud.explain.v1.output.json",
+  "title": "ExplainCloudOutput",
+  "description": "Result of guardian.cloud.explain@v1 (schema-checked Gemini output).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "riskLevel",
+    "category",
+    "confidence",
+    "summary",
+    "tactics",
+    "whatToDo",
+    "proposedMethod",
+    "model",
+    "latencyMs"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Screening event id. Bound from the trusted context.",
+      "title": "Screening event"
+    },
+    "riskLevel": {
+      "type": "string",
+      "enum": [
+        "SAFE",
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ],
+      "title": "Risk"
+    },
+    "category": {
+      "type": "string",
+      "maxLength": 40,
+      "title": "Scam type"
+    },
+    "confidence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "title": "Confidence"
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 1200,
+      "title": "Summary"
+    },
+    "tactics": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "maxLength": 300
+      },
+      "title": "Tactics"
+    },
+    "whatToDo": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "maxLength": 300
+      },
+      "title": "What to do"
+    },
+    "proposedMethod": {
+      "type": "string",
+      "maxLength": 32,
+      "title": "Proposed method"
+    },
+    "model": {
+      "type": "string",
+      "maxLength": 64,
+      "title": "Model"
+    },
+    "latencyMs": {
+      "type": "integer",
+      "minimum": 0,
+      "title": "Latency (ms)"
+    }
+  }
+}

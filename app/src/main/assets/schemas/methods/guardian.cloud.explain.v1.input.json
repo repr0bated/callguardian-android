@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/repr0bated/callguardian-android/schemas/methods/guardian.cloud.explain.v1.input.json",
+  "title": "ExplainCloudInput",
+  "description": "Send a REDACTED copy of the content to cloud Gemini for a detailed explanation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "channel",
+    "redactedText"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Screening event id. Bound from the trusted context.",
+      "title": "Screening event",
+      "readOnly": true
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "CALL",
+        "SMS"
+      ],
+      "title": "Channel"
+    },
+    "redactedText": {
+      "type": "string",
+      "maxLength": 4000,
+      "description": "Output of the on-device Redactor. Must not contain raw numbers or emails.",
+      "title": "Redacted content sent",
+      "readOnly": true
+    },
+    "onDeviceOpinion": {
+      "type": "string",
+      "maxLength": 200,
+      "title": "On-device opinion"
+    }
+  }
+}
