@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/repr0bated/callguardian-android/schemas/methods/guardian.call.reject.v1.input.json",
+  "title": "RejectCallInput",
+  "description": "Silence or reject the incoming call that is being screened.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "number",
+    "mode",
+    "reason"
+  ],
+  "properties": {
+    "number": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "title": "Sender",
+      "format": "phone",
+      "readOnly": true
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "SILENCE",
+        "REJECT"
+      ],
+      "title": "Action"
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Short justification, shown to the user and stored in the receipt.",
+      "title": "Reason"
+    }
+  }
+}
