@@ -1,117 +1,184 @@
-import java.io.File
+import net.pwall.json.schema.codegen.CodeGenerator
+
+buildscript {
+    repositories { mavenCentral() }
+    dependencies { classpath("net.pwall.json:json-kotlin-schema-codegen:0.123") }
+}
 
 plugins {
-    alias(libs.plugins.agp.application)
+    alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
-    alias(libs.plugins.hilt.android)
-    alias(libs.plugins.gms)
-    alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
+
+// google-services.json is optional. Drop the file from the Firebase console into app/
+// and the Google Services plugin is applied; otherwise the app falls back to the
+// FIREBASE_* values below (gradle properties / env), or to placeholders so it still builds.
+val hasGoogleServicesJson = file("google-services.json").exists()
+if (hasGoogleServicesJson) {
+    apply(plugin = libs.plugins.gms.get().pluginId)
+}
+
+fun cfg(name: String, default: String = ""): String =
+    (project.findProperty(name) as String?) ?: System.getenv(name) ?: default
+
+// Release signing: keystore lives OUTSIDE the repo. Point to it from
+// ~/.gradle/gradle.properties or env: CG_KEYSTORE, CG_KEYSTORE_PASSWORD, CG_KEY_ALIAS, CG_KEY_PASSWORD
+val releaseKeystore = cfg("CG_KEYSTORE").takeIf { it.isNotBlank() }?.let { file(it) }
 
 android {
     namespace = "com.example.callguardian"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.callguardian"
+        applicationId = "io.github.repr0bated.callguardian"
         minSdk = 29
-        targetSdk = 35
-        versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toInt() ?: 1
-        versionName = "1.0.0"
-
+        targetSdk = 36
+        versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0) + 20
+        versionName = "2.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
+
+        buildConfigField("boolean", "HAS_GOOGLE_SERVICES_JSON", hasGoogleServicesJson.toString())
+        buildConfigField("String", "FIREBASE_API_KEY", "\"${cfg("FIREBASE_API_KEY")}\"")
+        buildConfigField("String", "FIREBASE_APP_ID", "\"${cfg("FIREBASE_APP_ID")}\"")
+        buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${cfg("FIREBASE_PROJECT_ID")}\"")
+        buildConfigField("String", "CLOUD_MODEL", "\"${cfg("CLOUD_MODEL", "gemini-3.5-flash-lite")}\"")
     }
 
     signingConfigs {
-        create("release") {
-            storeFile = file("keystore.jks")
-            storePassword = System.getenv("SIGNING_STORE_PASSWORD")
-            keyAlias = System.getenv("SIGNING_KEY_ALIAS")
-            keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+        if (releaseKeystore != null && releaseKeystore.exists()) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = cfg("CG_KEYSTORE_PASSWORD")
+                keyAlias = cfg("CG_KEY_ALIAS", "callguardian")
+                keyPassword = cfg("CG_KEY_PASSWORD", cfg("CG_KEYSTORE_PASSWORD"))
+            }
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-            signingConfig = signingConfigs.getByName("release")
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("release")
         }
         debug {
+            applicationIdSuffix = ".debug"
             isMinifyEnabled = false
         }
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    kotlinOptions {
-        jvmTarget = "21"
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     buildFeatures {
         compose = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.composeCompiler
+        buildConfig = true
     }
 
     packaging {
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += setOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "/META-INF/INDEX.LIST",
+                "/META-INF/DEPENDENCIES",
+                "/META-INF/io.netty.versions.properties",
+            )
         }
+    }
+
+    testOptions { unitTests.isReturnDefaultValues = true }
+}
+
+kotlin {
+    jvmToolchain(21)
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        optIn.add("com.google.firebase.ai.type.PublicPreviewAPI")
     }
 }
 
+// ---------------------------------------------------------------------------------------------
+// Typed methods: Kotlin types are GENERATED from the JSON Schemas in src/main/assets/schemas
+// (the same files the app validates against at runtime), using json-kotlin-schema-codegen.
+// ---------------------------------------------------------------------------------------------
+val schemaDir = layout.projectDirectory.dir("src/main/assets/schemas")
+val generatedSchemaDir = layout.buildDirectory.dir("generated/source/schemas/kotlin")
+val generateSchemaTypes by tasks.registering {
+    description = "Generates Kotlin data classes from the method registry JSON Schemas"
+    inputs.dir(schemaDir)
+    inputs.file("schema-codegen.json")
+    outputs.dir(generatedSchemaDir)
+    doLast {
+        val out = generatedSchemaDir.get().asFile
+        out.deleteRecursively()
+        val files = listOf(schemaDir.file("registry.schema.json").asFile) +
+            schemaDir.dir("methods").asFile.listFiles()!!.filter { it.name.endsWith(".json") }.sortedBy { it.name }
+        CodeGenerator().apply {
+            configure(file("schema-codegen.json"))
+            baseDirectoryName = out.absolutePath
+            basePackageName = "com.example.callguardian.methods.gen"
+        }.generate(files)
+    }
+}
+android.sourceSets.getByName("main").java.srcDir(generatedSchemaDir)
+tasks.matching { it.name.startsWith("compile") && it.name.endsWith("Kotlin") || it.name.startsWith("ksp") }
+    .configureEach { dependsOn(generateSchemaTypes) }
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
-    implementation(platform(libs.libraries.compose.bom))
-    implementation(platform(libs.libraries.firebase.bom))
-    implementation(libs.libraries.firebase.vertexai)
-    implementation(libs.libraries.androidx.core.ktx)
-    implementation(libs.libraries.androidx.appcompat)
-    implementation(libs.libraries.androidx.lifecycle.runtime.ktx)
-    implementation(libs.libraries.androidx.lifecycle.runtime.compose)
-    implementation(libs.libraries.androidx.activity.compose)
-    implementation(libs.libraries.androidx.compose.ui)
-    implementation(libs.libraries.androidx.compose.ui.tooling.preview)
-    implementation(libs.libraries.androidx.compose.material3)
-    implementation(libs.libraries.androidx.compose.material)
-    implementation(libs.libraries.androidx.navigation.compose)
-    implementation(libs.libraries.androidx.hilt.navigation.compose)
-    implementation(libs.libraries.hilt.android)
-    kapt(libs.libraries.hilt.compiler)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons)
+    debugImplementation(libs.compose.ui.tooling)
 
-    implementation(libs.libraries.kotlinx.coroutines.core)
-    implementation(libs.libraries.kotlinx.coroutines.android)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.hilt.navigation.compose)
 
-    implementation(libs.libraries.androidx.room.runtime)
-    implementation(libs.libraries.androidx.room.ktx)
-    kapt(libs.libraries.androidx.room.compiler)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
 
-    implementation(libs.libraries.androidx.work.runtime.ktx)
-    implementation(libs.libraries.androidx.datastore.preferences)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
 
-    implementation(libs.libraries.retrofit)
-    implementation(libs.libraries.retrofit.converter.moshi)
-    implementation(libs.libraries.moshi.kotlin)
-    kapt(libs.libraries.moshi.kotlin.codegen)
-    implementation(libs.libraries.okhttp.logging.interceptor)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+    implementation(libs.datastore.preferences)
 
-    implementation(libs.libraries.timber)
+    implementation(libs.okhttp)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.moshi)
+    implementation(libs.moshi.kotlin)
 
-    testImplementation(libs.libraries.junit)
-    androidTestImplementation(libs.libraries.androidx.test.ext.junit)
-    androidTestImplementation(libs.libraries.androidx.test.espresso.core)
-    androidTestImplementation(platform(libs.libraries.compose.bom))
-    androidTestImplementation(libs.libraries.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.libraries.androidx.compose.ui.tooling)
-    debugImplementation(libs.libraries.androidx.compose.ui.test.manifest)
+    // Firebase AI Logic: cloud Gemini + on-device (ML Kit Prompt API / AICore) hybrid
+    implementation(libs.firebase.common)
+    implementation(libs.firebase.ai)
+    implementation(libs.firebase.ai.ondevice)
+    ksp(libs.firebase.ai.ksp)
+    implementation(libs.firebase.appcheck.playintegrity)
+    debugImplementation(libs.firebase.appcheck.debug)
+
+    implementation(libs.json.schema.validator)
+    implementation(libs.timber)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

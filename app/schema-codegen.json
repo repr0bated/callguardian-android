@@ -1,0 +1,8 @@
+{
+  "title": "Call Guardian schema codegen configuration (json-kotlin-schema-codegen)",
+  "annotations": {
+    "classes": {
+      "kotlinx.serialization.Serializable": null
+    }
+  }
+}
