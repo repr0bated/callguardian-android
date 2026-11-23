@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/repr0bated/callguardian-android/schemas/methods/guardian.call.allow.v1.input.json",
+  "title": "AllowNumberInput",
+  "description": "Mark a sender as trusted. Trusted senders are never blocked or rejected.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "number",
+    "reason"
+  ],
+  "properties": {
+    "number": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^(\\+?[0-9]{3,20}|[^\\s@]+@[^\\s@]+)$",
+      "description": "Normalized sender (digits with optional +, or an email-to-SMS address). Bound from the screened event, never from model text.",
+      "title": "Sender",
+      "format": "phone",
+      "readOnly": true
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Short justification, shown to the user and stored in the receipt.",
+      "title": "Reason"
+    }
+  }
+}
