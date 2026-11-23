@@ -1,0 +1,133 @@
+{
+  "registryVersion": "2026.11.1",
+  "methods": [
+    {
+      "id": "guardian.call.block@v1",
+      "alias": "block_number",
+      "version": 1,
+      "title": "Block sender",
+      "description": "Add the sender to Call Guardian's block list: future calls are rejected, future texts flagged.",
+      "capability": "telephony.block",
+      "execution": "device",
+      "channels": [
+        "CALL",
+        "SMS"
+      ],
+      "minRisk": "HIGH",
+      "minConfidence": 85,
+      "autoApply": true,
+      "contactSafe": false,
+      "input": "methods/guardian.call.block.v1.input.json",
+      "output": "methods/guardian.call.block.v1.output.json"
+    },
+    {
+      "id": "guardian.call.allow@v1",
+      "alias": "allow_number",
+      "version": 1,
+      "title": "Trust sender",
+      "description": "Mark the sender as trusted; nothing is ever blocked or rejected for them.",
+      "capability": "telephony.allow",
+      "execution": "device",
+      "channels": [
+        "CALL",
+        "SMS"
+      ],
+      "minRisk": "SAFE",
+      "maxRisk": "LOW",
+      "autoApply": false,
+      "contactSafe": true,
+      "input": "methods/guardian.call.allow.v1.input.json",
+      "output": "methods/guardian.call.allow.v1.output.json"
+    },
+    {
+      "id": "guardian.call.reject@v1",
+      "alias": "reject_call",
+      "version": 1,
+      "title": "Silence / reject call",
+      "description": "Silence or reject the call currently ringing.",
+      "capability": "telephony.screen",
+      "execution": "device",
+      "channels": [
+        "CALL"
+      ],
+      "minRisk": "HIGH",
+      "autoApply": true,
+      "contactSafe": false,
+      "input": "methods/guardian.call.reject.v1.input.json",
+      "output": "methods/guardian.call.reject.v1.output.json"
+    },
+    {
+      "id": "guardian.sms.quarantine@v1",
+      "alias": "quarantine_sms",
+      "version": 1,
+      "title": "Quarantine text",
+      "description": "Move the text to the in-app quarantine and post a scam warning.",
+      "capability": "sms.quarantine",
+      "execution": "device",
+      "channels": [
+        "SMS"
+      ],
+      "minRisk": "MEDIUM",
+      "autoApply": true,
+      "contactSafe": false,
+      "input": "methods/guardian.sms.quarantine.v1.input.json",
+      "output": "methods/guardian.sms.quarantine.v1.output.json"
+    },
+    {
+      "id": "guardian.report.scam@v1",
+      "alias": "report_scam",
+      "version": 1,
+      "title": "Report scam",
+      "description": "Prepare a 7726 spam report for the user to send.",
+      "capability": "report.external",
+      "execution": "device",
+      "channels": [
+        "CALL",
+        "SMS"
+      ],
+      "minRisk": "HIGH",
+      "autoApply": false,
+      "contactSafe": false,
+      "input": "methods/guardian.report.scam.v1.input.json",
+      "output": "methods/guardian.report.scam.v1.output.json"
+    },
+    {
+      "id": "guardian.contact.save@v1",
+      "alias": "save_contact",
+      "version": 1,
+      "title": "Save contact",
+      "description": "Open the contact editor pre-filled with this sender.",
+      "capability": "contacts.write",
+      "execution": "device",
+      "channels": [
+        "CALL",
+        "SMS"
+      ],
+      "minRisk": "SAFE",
+      "maxRisk": "LOW",
+      "autoApply": false,
+      "contactSafe": true,
+      "input": "methods/guardian.contact.save.v1.input.json",
+      "output": "methods/guardian.contact.save.v1.output.json"
+    },
+    {
+      "id": "guardian.cloud.explain@v1",
+      "alias": "explain_cloud",
+      "version": 1,
+      "title": "Explain in the cloud",
+      "description": "Send a redacted copy to cloud Gemini for a detailed explanation.",
+      "capability": "net.cloud_ai",
+      "execution": "cloud",
+      "channels": [
+        "CALL",
+        "SMS"
+      ],
+      "minRisk": "SAFE",
+      "autoApply": false,
+      "contactSafe": true,
+      "requiresConsent": true,
+      "input": "methods/guardian.cloud.explain.v1.input.json",
+      "output": "methods/guardian.cloud.explain.v1.output.json"
+    }
+  ]
+}

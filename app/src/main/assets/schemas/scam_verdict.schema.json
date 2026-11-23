@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/repr0bated/callguardian-android/schemas/scam_verdict.schema.json",
+  "title": "ScamVerdict",
+  "description": "Typed verdict + proposed action emitted by the on-device triage model. Nothing is executed unless the raw model output validates against this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "riskLevel",
+    "category",
+    "confidence",
+    "reasons",
+    "method",
+    "advice"
+  ],
+  "properties": {
+    "riskLevel": {
+      "enum": [
+        "SAFE",
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    "category": {
+      "enum": [
+        "NONE",
+        "PHISHING_LINK",
+        "IMPERSONATION",
+        "PACKAGE_DELIVERY",
+        "BANK_FRAUD",
+        "TOLL_OR_FINE",
+        "PRIZE_OR_LOTTERY",
+        "JOB_OFFER",
+        "ROMANCE_OR_WRONG_NUMBER",
+        "CRYPTO_INVESTMENT",
+        "TECH_SUPPORT",
+        "OTP_THEFT",
+        "ROBOCALL",
+        "SPOOFED_CALLER",
+        "OTHER"
+      ]
+    },
+    "confidence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "reasons": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    },
+    "advice": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "method": {
+      "enum": [
+        "NONE",
+        "BLOCK_NUMBER",
+        "ALLOW_NUMBER",
+        "REJECT_CALL",
+        "QUARANTINE_SMS",
+        "REPORT_SCAM",
+        "SAVE_CONTACT",
+        "EXPLAIN_CLOUD"
+      ],
+      "description": "The ONE registry method the model proposes (alias, upper-case). It is validated against the registry and the method's input schema before dispatch."
+    }
+  }
+}
