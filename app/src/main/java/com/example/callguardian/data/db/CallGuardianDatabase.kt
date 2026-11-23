@@ -2,18 +2,10 @@ package com.example.callguardian.data.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 
-@Database(
-    entities = [
-        PhoneProfileEntity::class,
-        PhoneInteractionEntity::class
-    ],
-    version = 1,
-    exportSchema = true
-)
-@TypeConverters(Converters::class)
+@Database(entities = [ScreeningEventEntity::class, PhoneProfileEntity::class, ReceiptEntity::class], version = 3, exportSchema = true)
 abstract class CallGuardianDatabase : RoomDatabase() {
-    abstract fun phoneProfileDao(): PhoneProfileDao
-    abstract fun phoneInteractionDao(): PhoneInteractionDao
+    abstract fun events(): ScreeningEventDao
+    abstract fun profiles(): PhoneProfileDao
+    abstract fun receipts(): ReceiptDao
 }
